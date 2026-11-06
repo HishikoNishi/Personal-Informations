@@ -1,0 +1,10 @@
+{
+  "description": "Hồ sơ cá nhân tương tác giới thiệu thông tin, kỹ năng, dự án và mục tiêu nghề nghiệp của một lập trình viên web junior.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
