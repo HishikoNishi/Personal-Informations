@@ -1,37 +1,37 @@
-# figma-make-app
+# Personal profile
 
-React + Vite + Tailwind CSS project running inside Figma Make.
+React 19 + Vite + Tailwind CSS v4 personal profile page in Vietnamese. This is a friendly page for friends and new acquaintances, not a recruiting or business site. Preserve its existing visual identity, layout, copy and nine tabs unless a task specifically asks for a change.
 
-## Development Server
+## Project structure
 
-A Vite development server is **already running** on `$PORT` (default 8443). You don't need to start it manually.
+- `src/main.tsx` mounts `src/App.tsx` and imports `src/index.css`.
+- `src/App.tsx` contains the UI and interaction logic.
+- `src/Icons.tsx` contains the icon set.
+- `src/index.css` contains Tailwind imports, local font faces, theme tokens and component styles.
+- `src/data/profile.ts` is the editable source for personal content.
+- `src/i18n.ts` contains the typed Vietnamese and English UI strings.
+- `index.html` contains document metadata and startup theme handling.
+- `public/` contains static assets; put the profile photo at `public/images/avatar.jpg`.
+- `vite.config.ts` configures Vite, React, Tailwind CSS and the `@` alias.
 
-- Preview URL: The user can access the running app through the preview panel
-- Hot reload: Changes to source files are reflected immediately
+## Scripts
 
-## Project Structure
+- `npm run dev` starts the development server.
+- `npm run typecheck` runs `tsc --noEmit`.
+- `npm run build` creates the production site in `dist/`.
+- `npm run preview` serves the production build locally.
+- `npm run format` formats files with oxfmt.
 
-This is the canonical project structure. Start with task-relevant files below. Only follow imports or inspect other files when required, when a documented path is missing, or when the repository contradicts this guide.
+## Content and implementation rules
 
-- `src/main.tsx` - React entrypoint; imports `src/index.css` and mounts `src/App.tsx` into the `#root` element
-- `src/App.tsx` - Primary application component and the usual starting point for UI work
-- `src/index.css` - Global CSS entrypoint and Tailwind CSS v4 import
-- `index.html` - Vite HTML shell containing the `#root` element and loading `src/main.tsx`
-- `package.json` - Project dependencies and the Vite build, development, preview, and formatting scripts
-- `vite.config.ts` - Vite configuration with React, Tailwind CSS v4, and Figma Make plugins plus the `@` alias for `src`
-- `.mise.toml` - Toolchain versions for Node.js and pnpm
+- Keep all visible text in Vietnamese with correct diacritics in the default language.
+- Never invent personal facts, habits, health details, contacts, links or other owner content. Unknown values stay empty and display `Chưa điền` unless empty cells are hidden.
+- Keep the nine sections: Tổng quan, Kỹ năng, Dự án, Sở thích, Tính cách, Lối sống, Phong cách, Sức khỏe and Liên hệ.
+- Preserve light and dark theme tokens, Be Vietnam Pro, Bricolage Grotesque and JetBrains Mono fonts.
+- Preserve accessible tab roles and arrow-key navigation, visible focus rings, dialog behavior where dialogs exist, and `prefers-reduced-motion` support.
+- Avoid new runtime dependencies unless required; ask before adding one.
+- Keep personal content editable in `src/data/profile.ts`; do not duplicate owner facts in UI components.
+- Use URL hash navigation for tabs and guarded localStorage access for persistent preferences.
+- Keep Cloudflare Pages builds independent of Figma-specific tooling and environment variables.
 
-## Dependencies
-
-- Runtime: React 19 and React DOM 19
-- Styling: Tailwind CSS v4 with the `@tailwindcss/vite` plugin
-- Build tooling: Vite 8, TypeScript 5.7, and `@vitejs/plugin-react`
-- Formatting: oxfmt
-
-## Styling
-
-This project uses **Tailwind CSS v4** through the `@tailwindcss/vite` plugin configured in `vite.config.ts`. `src/index.css` imports Tailwind with `@import 'tailwindcss';`. Use Tailwind utility classes directly in JSX and put global CSS or Tailwind v4 theme customization in `src/index.css`. This scaffold does not need a Tailwind config file or PostCSS config.
-
-`src/main.tsx` imports `src/index.css`, so global font wiring belongs in `src/index.css`. Keep CSS `@import` statements first, then add any `@font-face` rules and font-family defaults there.
-
-Tailwind emits utility classes in `@layer utilities`, and CSS outside any cascade layer overrides every layer regardless of specificity. Put global element styles, such as resets and defaults for `body`, headings, `button`, or `input`, inside `@layer base { ... }` so utility classes on those elements still apply. Tailwind's Preflight already applies `box-sizing: border-box`, removes default margins, and sets `font: inherit` on form controls, so do not repeat those rules.
+Tailwind CSS v4 is configured through `@tailwindcss/vite`; global element styles belong inside `@layer base` so utility classes remain effective.
