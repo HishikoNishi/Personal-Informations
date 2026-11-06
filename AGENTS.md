@@ -32,6 +32,6 @@ React 19 + Vite + Tailwind CSS v4 personal profile page in Vietnamese. This is a
 - Avoid new runtime dependencies unless required; ask before adding one.
 - Keep personal content editable in `src/data/profile.ts`; do not duplicate owner facts in UI components.
 - Use URL hash navigation for tabs and guarded localStorage access for persistent preferences.
-- Keep Cloudflare Pages builds independent of Figma-specific tooling and environment variables.
+- Keep Cloudflare Pages builds independent of external design tools and environment variables.
 
 Tailwind CSS v4 is configured through `@tailwindcss/vite`; global element styles belong inside `@layer base` so utility classes remain effective.

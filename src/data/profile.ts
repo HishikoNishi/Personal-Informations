@@ -37,6 +37,7 @@ export const tabs: { id: TabId; label: LocalizedText; icon: IconName }[] = [
 export const profile = {
   nickname: { vi: "HishikoNíhi" },
   fullName: { vi: "Trang Hùng Gia Bảo" },
+  monogram: "HN",
   location: { vi: "Khu vực Đà Nẵng, Việt Nam" },
   photo: "",
   intro: { vi: "" },
@@ -72,10 +73,10 @@ export const profile = {
     { name: { vi: "clinic-management-system" }, description: { vi: "Hệ thống quản lý phòng khám, C# và Vue.js." }, style: "clinic", icon: "heart", category: { vi: "MỘT BÀI TOÁN THỰC TẾ", en: "A PRACTICAL CHALLENGE" }, tags: [{ vi: "C#" }, { vi: "Vue.js" }], repoUrl: "" },
   ] satisfies Project[],
   hobbies: [
-    { label: { vi: "Âm nhạc", en: "Music" }, hint: { vi: "Thể loại nghe và làm", en: "Genres I listen to and make" } },
-    { label: { vi: "Game", en: "Games" }, hint: { vi: "Đang chơi", en: "Currently playing" } },
-    { label: { vi: "Nhiếp ảnh", en: "Photography" }, hint: { vi: "Máy ảnh, kiểu ảnh", en: "Camera and photo style" } },
-  ] satisfies ProfileCell[],
+    { label: { vi: "Âm nhạc", en: "Music" }, hint: { vi: "Thể loại nghe và làm", en: "Genres I listen to and make" }, value: undefined },
+    { label: { vi: "Game", en: "Games" }, hint: { vi: "Đang chơi", en: "Currently playing" }, value: undefined },
+    { label: { vi: "Nhiếp ảnh", en: "Photography" }, hint: { vi: "Máy ảnh, kiểu ảnh", en: "Camera and photo style" }, value: undefined },
+  ] satisfies (ProfileCell & { hint: LocalizedText })[],
   personality: [
     { vi: "Điểm mạnh", en: "Strengths" }, { vi: "Điểm yếu", en: "Weaknesses" },
     { vi: "Ba từ mô tả mình", en: "Three words that describe me" }, { vi: "Thích", en: "Likes" }, { vi: "Không thích", en: "Dislikes" },

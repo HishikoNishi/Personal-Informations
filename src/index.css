@@ -1533,6 +1533,11 @@ html.dark {
 .contact-handle {
   font-size: 13px;
 }
+.cell-value .placeholder-tag,
+.intro-area .placeholder-tag,
+.contact-handle .placeholder-tag {
+  font-size: 13px;
+}
 .section-kicker,
 .cell-label,
 .chip,

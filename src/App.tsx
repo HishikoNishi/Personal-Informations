@@ -42,7 +42,7 @@ function PhotoFrame() {
   const [failed, setFailed] = useState(false);
   const photo = profile.photo;
   return <div className="avatar-wrap"><div className="photo-frame" aria-label={language === "vi" ? "Ảnh đại diện" : "Profile photo"}>
-    {photo && !failed ? <img src={photo} alt={language === "vi" ? "Ảnh đại diện" : "Profile photo"} onError={() => setFailed(true)} /> : <span className="monogram">HN</span>}
+    {photo && !failed ? <img src={photo} alt={language === "vi" ? "Ảnh đại diện" : "Profile photo"} onError={() => setFailed(true)} /> : <span className="monogram">{profile.monogram}</span>}
   </div></div>;
 }
 
@@ -102,7 +102,11 @@ function TabContent({ active }: { active: TabId }) {
   if (active === "tong-quan") return <CellGrid cells={profile.overview} />;
   if (active === "ky-nang") return <div className="info-grid skills-grid">{profile.skills.map((group, i) => <InfoCell key={text(group.label, language)} label={text(group.label, language)} number={`0${i + 1}`} wide={i === profile.skills.length - 1}><div className="chips">{group.items.map((item) => <Chip key={text(item, language)} variant={i === 0 ? "accent" : "default"}>{text(item, language)}</Chip>)}</div></InfoCell>)}</div>;
   if (active === "du-an") return <div className="project-grid">{profile.projects.map((project, i) => <ProjectCard key={text(project.name, language)} project={project} index={i} />)}</div>;
-  if (active === "so-thich") return hideEmpty ? <EmptyState /> : <><div className="info-grid">{profile.hobbies.map((cell, i) => <div className="info-cell" key={text(cell.label, language)}><div className="cell-label"><span>{text(cell.label, language)}</span><span className="cell-number">0{i + 1}</span></div><p className="cell-hint">{text(cell.hint, language)}</p><PlaceholderTag /></div>)}</div><div className="gallery-heading"><span className="cell-label">{t(language, "gallery")}</span><span>{t(language, "galleryCaption")}</span></div><div className="photo-gallery">{[1, 2, 3, 4].map((i) => <div className="gallery-placeholder" key={i} aria-label={language === "vi" ? `Ảnh ${i} chưa điền` : `Photo ${i} not filled in`}><Icon name="camera" size={22} /><PlaceholderTag /></div>)}</div></>;
+  if (active === "so-thich") {
+    const hobbies = hideEmpty ? profile.hobbies.filter((cell) => text(cell.value, language)) : profile.hobbies;
+    if (!hobbies.length) return <EmptyState />;
+    return <><div className="info-grid">{hobbies.map((cell, i) => <div className="info-cell" key={text(cell.label, language)}><div className="cell-label"><span>{text(cell.label, language)}</span><span className="cell-number">0{i + 1}</span></div><p className="cell-hint">{text(cell.hint, language)}</p><div className="cell-value">{text(cell.value, language) || <PlaceholderTag />}</div></div>)}</div><div className="gallery-heading"><span className="cell-label">{t(language, "gallery")}</span><span>{t(language, "galleryCaption")}</span></div><div className="photo-gallery">{[1, 2, 3, 4].map((i) => <div className="gallery-placeholder" key={i} aria-label={language === "vi" ? `Ảnh ${i} chưa điền` : `Photo ${i} not filled in`}><Icon name="camera" size={22} /><PlaceholderTag /></div>)}</div></>;
+  }
   if (active === "tinh-cach") return <CellGrid cells={profile.personality} />;
   if (active === "loi-song") return <CellGrid cells={profile.lifestyle} />;
   if (active === "phong-cach") return <CellGrid cells={profile.style} />;
