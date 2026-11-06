@@ -106,10 +106,35 @@ function AppTab({ index, active, onSelect, onKeyDown }: { index: number; active:
 }
 
 export default function App() {
-  const [dark, setDark] = useState(false);
-  const [active, setActive] = useState(0);
+  const [dark, setDark] = useState(() => {
+    try {
+      const saved = localStorage.getItem("theme");
+      if (saved === "light" || saved === "dark") return saved === "dark";
+    } catch { /* Storage can be unavailable in private browsing contexts. */ }
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
+  const tabFromHash = () => {
+    const index = tabs.findIndex((tab) => `#${tab.id}` === window.location.hash);
+    return index < 0 ? 0 : index;
+  };
+  const [active, setActive] = useState(tabFromHash);
   const [hideEmpty, setHideEmpty] = useState(false);
   const tabList = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", dark);
+    const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    themeColor?.setAttribute("content", dark ? "#0b1114" : "#f1f4f6");
+    try { localStorage.setItem("theme", dark ? "dark" : "light"); } catch { /* Ignore unavailable storage. */ }
+  }, [dark]);
+  useEffect(() => {
+    const updateFromHash = () => setActive(tabFromHash());
+    window.addEventListener("hashchange", updateFromHash);
+    return () => window.removeEventListener("hashchange", updateFromHash);
+  }, []);
+  useEffect(() => {
+    const hash = `#${tabs[active].id}`;
+    if (window.location.hash !== hash) window.history.replaceState(null, "", hash);
+  }, [active]);
   useEffect(() => {
     const list = tabList.current;
     const button = list?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[active];
