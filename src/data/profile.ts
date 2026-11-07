@@ -35,7 +35,7 @@ export const tabs: { id: TabId; label: LocalizedText; icon: IconName }[] = [
 ];
 
 export const profile = {
-  nickname: { vi: "HishikoNíhi" },
+  nickname: { vi: "HishikoNishi" },
   fullName: { vi: "Trang Hùng Gia Bảo" },
   monogram: "HN",
   location: { vi: "Khu vực Đà Nẵng, Việt Nam" },
