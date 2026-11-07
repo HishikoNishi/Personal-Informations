@@ -202,10 +202,10 @@ export default function App() {
         try {
           await api("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, password }) });
           setAuthenticated(true); setEditMode(true); await loadAdmin(); setNotice(language === "vi" ? "Đăng nhập thành công." : "Signed in successfully.");
-        } catch {
+        } catch (error) {
           setAuthenticated(false); setEditMode(false);
-          const message = language === "vi" ? "Tên đăng nhập hoặc mật khẩu không đúng; có thể bạn đã thử quá nhiều lần." : "The username or password is incorrect, or the attempt limit was reached.";
-          throw new Error(message);
+          if (error instanceof Error) throw error;
+          throw new Error(language === "vi" ? "Không thể đăng nhập lúc này." : "Unable to sign in right now.");
         }
       };
     } else {

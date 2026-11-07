@@ -15,21 +15,25 @@ npm run worker:dev
 
 Wrangler chạy Worker cùng D1 cục bộ và phục vụ ứng dụng từ `dist/`. Worker tự tạo nội dung ban đầu từ `src/data/profile.ts` khi cơ sở dữ liệu chưa có dữ liệu. Để xem giao diện tĩnh với dữ liệu dự phòng, có thể chạy `npm run dev`.
 
-### Tạo thông tin đăng nhập cục bộ
+### Cách đăng nhập và cấu hình cục bộ
 
 1. Sao chép `.dev.vars.example` thành `.dev.vars`.
 2. Chạy `node scripts/hash-password.mjs` trong terminal tương tác. Nhập mật khẩu tại lời nhắc ẩn; lệnh in hash PBKDF2 và session secret ngẫu nhiên, không in mật khẩu.
-3. Điền hai giá trị được tạo vào `.dev.vars` dưới các tên `ADMIN_PASSWORD_HASH` và `SESSION_SECRET`.
+3. Trong `.dev.vars`, đặt `ADMIN_USERNAME` thành username bạn muốn dùng. Thêm `ADMIN_PASSWORD_HASH` và `SESSION_SECRET` từ kết quả script. Cả ba phải có giá trị không rỗng.
 4. Khởi động lại `npm run worker:dev` sau khi đổi `.dev.vars`.
-5. Mở trang cục bộ, mở Developer Tools → Console, rồi gọi hàm đăng nhập:
+5. Mở trang cục bộ, mở Developer Tools → Console, rồi gọi hàm đăng nhập với username và mật khẩu tương ứng:
 
    ```js
-   await window.profileLogin("owner", "YOUR_PASSWORD")
+   await window.profileLogin("YOUR_USERNAME", "YOUR_PASSWORD")
    ```
 
-   Thay `YOUR_PASSWORD` bằng mật khẩu của bạn. Username của tài khoản đơn là `owner`. Không lưu hoặc chia sẻ dòng lệnh có mật khẩu.
+   Thay hai giá trị mẫu bằng thông tin đăng nhập của bạn. Worker so sánh username với `ADMIN_USERNAME` và kiểm tra mật khẩu với `ADMIN_PASSWORD_HASH`. Không lưu hoặc chia sẻ dòng lệnh có mật khẩu.
 
-`.dev.vars` và dữ liệu Wrangler cục bộ đã được Git bỏ qua. Không chia sẻ hoặc commit chúng. Đăng nhập dùng cookie HttpOnly/Secure/SameSite=Strict, khóa sau năm lần sai trong 15 phút và yêu cầu CSRF header cùng Origin phù hợp cho mọi thao tác ghi.
+Không có hộp thoại đăng nhập trên trang; `window.profileLogin(username, password)` gửi POST JSON đến `/api/auth/login`. Thiếu hoặc để rỗng bất kỳ biến nào trong ba biến trên sẽ trả về HTTP 503 với `Chưa cấu hình đăng nhập`. Sai thông tin trả về HTTP 401. Sau năm lần sai trong 15 phút từ cùng địa chỉ IP, Worker trả HTTP 429 cùng thông báo giới hạn riêng.
+
+`ADMIN_PASSWORD_HASH` có dạng `pbkdf2$sha256$<iterations>$<salt-base64url>$<digest-base64url>`. Worker đọc đúng năm phần, chỉ chấp nhận PBKDF2-SHA256 với 100.000–1.000.000 vòng lặp, salt 16–64 byte và digest 32 byte; sau đó so sánh kết quả dẫn xuất bằng phép so sánh thời gian hằng. Script hiện tạo hash với 310.000 vòng lặp. `SESSION_SECRET` là chuỗi Base64URL ngẫu nhiên; cần ít nhất 32 byte sau giải mã.
+
+`.dev.vars` và dữ liệu Wrangler cục bộ đã được Git bỏ qua. Không chia sẻ hoặc commit chúng. Đăng nhập dùng cookie HttpOnly/Secure/SameSite=Strict và mọi thao tác ghi yêu cầu CSRF header cùng Origin phù hợp.
 
 ## Cloudflare Workers Builds (triển khai production)
 
@@ -43,12 +47,13 @@ Các lệnh trong phần này chỉ để bạn chạy khi sẵn sàng triển k
 
    Sao chép `database_id` UUID Wrangler trả về vào `d1_databases[0].database_id` trong `wrangler.jsonc`, thay `REPLACE_WITH_D1_DATABASE_ID`. Giữ `binding` là `DB` và tên database là `personal-informations`.
 
-2. Tạo thông tin đăng nhập production tại máy cá nhân bằng `node scripts/hash-password.mjs`. Trên Cloudflare Dashboard, mở **Workers & Pages → personal-informations → Settings → Variables and Secrets**. Thêm hai biến runtime dạng **Secret**:
+2. Tạo hash và session secret production tại máy cá nhân bằng `node scripts/hash-password.mjs`. Trên Cloudflare Dashboard, mở **Workers & Pages → personal-informations → Settings → Variables and Secrets**. Tạo đủ ba biến runtime sau:
 
-   - `ADMIN_PASSWORD_HASH`: hash PBKDF2 do script tạo.
-   - `SESSION_SECRET`: secret ngẫu nhiên do script tạo.
+   - `ADMIN_USERNAME`: **Variable** (text), username bạn sẽ nhập qua `window.profileLogin()`.
+   - `ADMIN_PASSWORD_HASH`: **Secret**, hash PBKDF2 do script tạo.
+   - `SESSION_SECRET`: **Secret**, secret ngẫu nhiên do script tạo.
 
-   Không đưa mật khẩu gốc, hash hoặc session secret vào mã nguồn, biến build, log hay chat.
+   Cả ba giá trị phải được đặt cho môi trường production của Worker. Nếu dùng Preview deployments, hãy tắt preview hoặc cấu hình username/hash/session riêng và D1 cô lập cho preview; không dùng secrets production trong preview. Không đưa mật khẩu gốc, hash hoặc session secret vào mã nguồn, biến build, log hay chat.
 
 3. Kết nối repository tại **Workers & Pages → personal-informations → Settings → Build**. Đặt **Build command** là:
 
@@ -64,7 +69,7 @@ Các lệnh trong phần này chỉ để bạn chạy khi sẵn sàng triển k
 
    Giữ root directory ở thư mục chứa `wrangler.jsonc` nếu đây không phải monorepo. Workers Builds đọc phiên bản Wrangler đã khai báo trong `package.json`.
 
-4. Chạy build production đầu tiên và xem log để xác nhận migration cùng Worker đã được triển khai. Sau đó kiểm tra trang công khai và đăng nhập chủ sở hữu. Không cần R2, biến build hay công cụ thiết kế ngoài dự án.
+4. Chạy build production đầu tiên và xem log để xác nhận migration cùng Worker đã được triển khai. Mở Developer Tools → Console trên trang production và đăng nhập bằng `await window.profileLogin("YOUR_USERNAME", "YOUR_PASSWORD")`. Không cần R2, biến build hay công cụ thiết kế ngoài dự án.
 
 ## Sao lưu, phục hồi và rollback
 

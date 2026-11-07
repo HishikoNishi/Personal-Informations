@@ -1,3 +1,4 @@
 # Local-only placeholders. Generate values with: node scripts/hash-password.mjs
+ADMIN_USERNAME=owner
 ADMIN_PASSWORD_HASH=replace-with-generated-pbkdf2-hash
 SESSION_SECRET=replace-with-generated-random-session-secret

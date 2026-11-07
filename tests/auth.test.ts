@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { handleApi } from "../worker/index";
+import type { Env } from "../worker/model";
 import { constantTimeEqual, hashPassword, hasCsrfHeader, isRateLimited, SESSION_COOKIE, SESSION_SECONDS, sessionCookie, signSession, verifyPassword, verifySession } from "../worker/auth";
 
 function secretForTests() {
@@ -6,6 +8,37 @@ function secretForTests() {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function loginRequest(body: unknown) {
+  return new Request("https://profile.example/api/auth/login", {
+    method: "POST",
+    headers: { Origin: "https://profile.example", "X-Requested-With": "fetch", "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+function envForLogin(failedAttempts = 0, overrides: Partial<Env> = {}): Env {
+  const DB = {
+    prepare() {
+      return {
+        bind() {
+          return {
+            first: async () => ({ count: failedAttempts }),
+            run: async () => ({ success: true }),
+          };
+        },
+      };
+    },
+  } as unknown as D1Database;
+  return {
+    DB,
+    ASSETS: {} as Fetcher,
+    ADMIN_USERNAME: "owner",
+    ADMIN_PASSWORD_HASH: "",
+    SESSION_SECRET: secretForTests(),
+    ...overrides,
+  };
 }
 
 describe("owner authentication primitives", () => {
@@ -45,5 +78,39 @@ describe("owner authentication primitives", () => {
     expect(hasCsrfHeader(new Request(request.url, { method: "PUT", headers: { Origin: "https://other.example", "X-Requested-With": "fetch" } }))).toBe(false);
     expect(hasCsrfHeader(new Request(request.url, { method: "PUT", headers: { Origin: "https://profile.example" } }))).toBe(false);
     expect(sessionCookie("signed-value")).toContain(`${SESSION_COOKIE}=signed-value; Path=/; Max-Age=${SESSION_SECONDS}; HttpOnly; Secure; SameSite=Strict`);
+  });
+});
+
+describe("owner login configuration and responses", () => {
+  it.each([
+    ["ADMIN_USERNAME", { ADMIN_USERNAME: undefined }],
+    ["ADMIN_PASSWORD_HASH", { ADMIN_PASSWORD_HASH: undefined }],
+    ["SESSION_SECRET", { SESSION_SECRET: undefined }],
+    ["ADMIN_USERNAME", { ADMIN_USERNAME: "   " }],
+    ["ADMIN_PASSWORD_HASH", { ADMIN_PASSWORD_HASH: "" }],
+    ["SESSION_SECRET", { SESSION_SECRET: "  " }],
+  ])("returns 503 when %s is empty", async (_name, override) => {
+    const env = envForLogin(0, override as Partial<Env>);
+    const response = await handleApi(loginRequest({ username: "owner", password: "test" }), env);
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ error: "Chưa cấu hình đăng nhập" });
+  });
+
+  it("returns a distinct 429 message when the login limit is reached", async () => {
+    const env = envForLogin(5, { ADMIN_PASSWORD_HASH: "configured-hash" });
+    const response = await handleApi(loginRequest({ username: "owner", password: "wrong" }), env);
+    const body = await response.json() as { error: string };
+    expect(response.status).toBe(429);
+    expect(body.error).toContain("thử đăng nhập quá nhiều lần");
+    expect(body.error).not.toContain("không đúng");
+  });
+
+  it("returns 401 for wrong credentials after configuration is present", async () => {
+    const env = envForLogin();
+    env.ADMIN_PASSWORD_HASH = await hashPassword("correct-password", new Uint8Array(16).fill(9), 100_000);
+    const response = await handleApi(loginRequest({ username: "wrong-user", password: "wrong-password" }), env);
+    const body = await response.json() as { error: string };
+    expect(response.status).toBe(401);
+    expect(body.error).toContain("không đúng");
   });
 });

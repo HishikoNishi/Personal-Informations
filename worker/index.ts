@@ -12,7 +12,6 @@ const jsonResponse = (value: unknown, status = 200, admin = false, extraHeaders:
   headers: { "Content-Type": "application/json; charset=utf-8", "X-Content-Type-Options": "nosniff", "Cache-Control": admin ? "no-store" : "no-cache", ...Object.fromEntries(new Headers(extraHeaders).entries()) },
 });
 
-const DUMMY_PASSWORD_HASH = `pbkdf2$sha256$310000$${"A".repeat(22)}$${"A".repeat(43)}`;
 const wait = (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
 async function parseJson(request: Request, maxBytes: number): Promise<unknown> {
@@ -33,24 +32,27 @@ async function hashIp(secret: string, ip: string): Promise<string> {
 
 async function handleLogin(request: Request, env: Env): Promise<Response> {
   if (request.method !== "POST") return jsonResponse({ error: "Phương thức không được hỗ trợ." }, 405, true);
+  const username = env.ADMIN_USERNAME?.trim();
+  const passwordHash = env.ADMIN_PASSWORD_HASH?.trim();
+  const sessionSecret = env.SESSION_SECRET?.trim();
+  if (!username || !passwordHash || !sessionSecret) return jsonResponse({ error: "Chưa cấu hình đăng nhập" }, 503, true);
   if (!hasCsrfHeader(request)) return jsonResponse({ error: "Yêu cầu không hợp lệ." }, 403, true);
   let body: unknown;
   try { body = await parseJson(request, 4096); } catch { return jsonResponse({ error: "Yêu cầu không hợp lệ." }, 400, true); }
-  const username = isRecord(body) ? body.username : undefined;
+  const submittedUsername = isRecord(body) ? body.username : undefined;
   const password = isRecord(body) ? body.password : undefined;
-  if (typeof username !== "string" || username.length > 128 || typeof password !== "string" || password.length > 1024 || !password) return jsonResponse({ error: "Tên đăng nhập hoặc mật khẩu không đúng." }, 401, true);
+  if (typeof submittedUsername !== "string" || submittedUsername.length > 128 || typeof password !== "string" || password.length > 1024 || !password) return jsonResponse({ error: "Tên đăng nhập hoặc mật khẩu không đúng." }, 401, true);
 
-  const keySecret = env.SESSION_SECRET ?? "local-rate-limit-key-is-not-a-session-secret";
   const address = request.headers.get("CF-Connecting-IP") ?? request.headers.get("X-Forwarded-For")?.split(",")[0]?.trim() ?? "unknown";
-  const ipHash = await hashIp(keySecret, address);
+  const ipHash = await hashIp(sessionSecret, address);
   const now = Math.floor(Date.now() / 1000);
   const recent = await env.DB.prepare("SELECT COUNT(*) AS count FROM login_attempts WHERE ip_hash = ? AND attempted_at > ? AND succeeded = 0").bind(ipHash, now - 15 * 60).first<{ count: number }>();
   if (isRateLimited(recent?.count ?? 0)) {
     return jsonResponse({ error: "Bạn đã thử đăng nhập quá nhiều lần. Vui lòng thử lại sau 15 phút." }, 429, true);
   }
 
-  const validPassword = await verifyPassword(password, env.ADMIN_PASSWORD_HASH ?? DUMMY_PASSWORD_HASH);
-  if (username !== "owner" || !validPassword || !env.ADMIN_PASSWORD_HASH || !env.SESSION_SECRET) {
+  const validPassword = await verifyPassword(password, passwordHash);
+  if (submittedUsername !== username || !validPassword) {
     await env.DB.prepare("INSERT INTO login_attempts (ip_hash, attempted_at, succeeded) VALUES (?, ?, 0)").bind(ipHash, now).run();
     await env.DB.prepare("DELETE FROM login_attempts WHERE attempted_at < ?").bind(now - 30 * 24 * 60 * 60).run();
     await wait(350);
@@ -58,7 +60,7 @@ async function handleLogin(request: Request, env: Env): Promise<Response> {
   }
 
   await env.DB.prepare("DELETE FROM login_attempts WHERE ip_hash = ?").bind(ipHash).run();
-  const token = await signSession(env.SESSION_SECRET);
+  const token = await signSession(sessionSecret);
   return jsonResponse({ authenticated: true }, 200, true, { "Set-Cookie": sessionCookie(token) });
 }
 
@@ -66,12 +68,12 @@ async function handleAuth(request: Request, env: Env, pathname: string): Promise
   if (pathname === "/api/auth/login") return handleLogin(request, env);
   if (pathname === "/api/auth/me") {
     if (request.method !== "GET") return jsonResponse({ error: "Phương thức không được hỗ trợ." }, 405, true);
-    return jsonResponse({ authenticated: await isOwnerRequest(request, env.SESSION_SECRET) }, 200, true);
+    return jsonResponse({ authenticated: await isOwnerRequest(request, env.SESSION_SECRET?.trim()) }, 200, true);
   }
   if (pathname === "/api/auth/logout") {
     if (request.method !== "POST") return jsonResponse({ error: "Phương thức không được hỗ trợ." }, 405, true);
     if (!hasCsrfHeader(request)) return jsonResponse({ error: "Yêu cầu không hợp lệ." }, 403, true);
-    if (!getCookie(request, SESSION_COOKIE) || !(await isOwnerRequest(request, env.SESSION_SECRET))) {
+    if (!getCookie(request, SESSION_COOKIE) || !(await isOwnerRequest(request, env.SESSION_SECRET?.trim()))) {
       return jsonResponse({ error: "Phiên đăng nhập đã hết hạn." }, 401, true, { "Set-Cookie": expiredSessionCookie() });
     }
     return jsonResponse({ authenticated: false }, 200, true, { "Set-Cookie": expiredSessionCookie() });
@@ -101,7 +103,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   if (pathname.startsWith("/api/auth/")) return handleAuth(request, env, pathname);
 
   if (pathname.startsWith("/api/admin/")) {
-    if (!(await isOwnerRequest(request, env.SESSION_SECRET))) return jsonResponse({ error: "Cần đăng nhập để tiếp tục." }, 401, true);
+    if (!(await isOwnerRequest(request, env.SESSION_SECRET?.trim()))) return jsonResponse({ error: "Cần đăng nhập để tiếp tục." }, 401, true);
     if (!hasCsrfHeader(request) && request.method !== "GET") return jsonResponse({ error: "Yêu cầu không hợp lệ." }, 403, true);
     return adminRoute(request, env, pathname);
   }
