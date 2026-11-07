@@ -25,6 +25,7 @@ React 19 + Vite + Tailwind CSS v4 personal profile page in Vietnamese. This is a
 - `npm test` runs Vitest.
 - `npm run worker:dev` starts the local Cloudflare Worker.
 - `npm run db:migrate:local` applies D1 migrations to the local database.
+- `node scripts/hash-password.mjs` securely prompts for an owner password and prints local secret values.
 - `npm run format` formats files with oxfmt.
 
 ## Content and implementation rules
