@@ -53,6 +53,8 @@ Các lệnh trong phần này chỉ để bạn chạy khi sẵn sàng triển k
    - `ADMIN_PASSWORD_HASH`: **Secret**, hash PBKDF2 do script tạo.
    - `SESSION_SECRET`: **Secret**, secret ngẫu nhiên do script tạo.
 
+   Khi nhập trên Dashboard, điền tên vào ô **Variable name** và chỉ điền giá trị vào ô **Value**. Ví dụ, với dòng script in `ADMIN_PASSWORD_HASH=pbkdf2$sha256$310000$...`, tên là `ADMIN_PASSWORD_HASH`, còn giá trị bắt đầu từ `pbkdf2$sha256$310000$...`; không dán cả phần `ADMIN_PASSWORD_HASH=` vào ô Value và không thêm dấu ngoặc kép. Làm tương tự với `SESSION_SECRET`. Mật khẩu gốc không phải giá trị của Secret này.
+
    Cả ba giá trị phải được đặt cho môi trường production của Worker. Nếu dùng Preview deployments, hãy tắt preview hoặc cấu hình username/hash/session riêng và D1 cô lập cho preview; không dùng secrets production trong preview. Không đưa mật khẩu gốc, hash hoặc session secret vào mã nguồn, biến build, log hay chat.
 
 3. Kết nối repository tại **Workers & Pages → personal-informations → Settings → Build**. Đặt **Build command** là:
