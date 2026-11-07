@@ -31,13 +31,13 @@ Wrangler chạy Worker cùng D1 cục bộ và phục vụ ứng dụng từ `di
 
 Không có hộp thoại đăng nhập trên trang; `window.profileLogin(username, password)` gửi POST JSON đến `/api/auth/login`. Thiếu/rỗng biến hoặc hash/secret sai định dạng sẽ trả HTTP 503 với `Chưa cấu hình đăng nhập`. Sai thông tin đăng nhập trả HTTP 401. Sau năm lần sai trong 15 phút từ cùng địa chỉ IP, Worker trả HTTP 429 cùng thông báo giới hạn riêng.
 
-`ADMIN_PASSWORD_HASH` có dạng `pbkdf2$sha256$<iterations>$<salt-base64url>$<digest-base64url>`. Worker đọc đúng năm phần, chỉ chấp nhận PBKDF2-SHA256 với 100.000–1.000.000 vòng lặp, salt 16–64 byte và digest 32 byte; sau đó so sánh kết quả dẫn xuất bằng phép so sánh thời gian hằng. Script hiện tạo hash với 310.000 vòng lặp. `SESSION_SECRET` là chuỗi Base64URL ngẫu nhiên; cần ít nhất 32 byte sau giải mã.
+`ADMIN_PASSWORD_HASH` hiện có dạng `pbkdf2$sha256-chain4$100000$<salt-base64url>$<digest-base64url>`. Cloudflare Workers giới hạn mỗi phép PBKDF2 ở 100.000 vòng, vì vậy Worker thực hiện bốn lượt PBKDF2-SHA256 nối tiếp, mỗi lượt 100.000 vòng, với salt riêng theo từng lượt. Hash có salt ngẫu nhiên 16 byte và digest 32 byte; kết quả được so sánh bằng phép so sánh thời gian hằng. Hash cũ dạng `pbkdf2$sha256$310000$...` không chạy được trên Cloudflare và cần được tạo lại bằng script hiện tại. `SESSION_SECRET` là chuỗi Base64URL ngẫu nhiên; cần ít nhất 32 byte sau giải mã.
 
 ### Kiểm tra lỗi đăng nhập
 
 Nếu `/api/auth/login` vẫn trả 401, chạy `node scripts/verify-password.mjs` từ thư mục dự án trong terminal tương tác. Nhập mật khẩu gốc và đúng giá trị của `ADMIN_PASSWORD_HASH` khi được nhắc; cả hai trường đều không hiển thị khi gõ. Với Cloudflare, nhập riêng phần giá trị bắt đầu bằng `pbkdf2$...`, không nhập tên biến hoặc tiền tố `ADMIN_PASSWORD_HASH=`. Script dùng chung hàm PBKDF2 với Worker và chỉ in `MATCH` hoặc `NO MATCH`; hash sai tiền tố/thuật toán, sai số phần, Base64URL lỗi hoặc tham số không hợp lệ sẽ in `NO MATCH` kèm lý do định dạng. Không truyền mật khẩu/hash qua đối số lệnh, không chụp màn hình và không chia sẻ chúng.
 
-`MATCH` xác nhận mật khẩu đó khớp với hash đã nhập tại máy này; nó không xác nhận Cloudflare đã lưu cùng hash, username đúng, hoặc Worker production đã triển khai đúng cấu hình. Nếu hiện `NO MATCH`, tạo lại hash bằng `node scripts/hash-password.mjs`, rồi cập nhật đúng giá trị hash trong Secret `ADMIN_PASSWORD_HASH` và triển khai Worker.
+`MATCH` xác nhận mật khẩu đó khớp với hash đã nhập tại máy này; nó không xác nhận Cloudflare đã lưu cùng hash, username đúng, hoặc Worker production đã triển khai đúng cấu hình. Hash cũ có 310.000 vòng/lượt phải được tạo lại bằng `node scripts/hash-password.mjs`, rồi cập nhật đúng giá trị hash mới trong Secret `ADMIN_PASSWORD_HASH` và triển khai Worker.
 
 `.dev.vars` và dữ liệu Wrangler cục bộ đã được Git bỏ qua. Không chia sẻ hoặc commit chúng. Đăng nhập dùng cookie HttpOnly/Secure/SameSite=Strict và mọi thao tác ghi yêu cầu CSRF header cùng Origin phù hợp.
 
@@ -59,7 +59,7 @@ Các lệnh trong phần này chỉ để bạn chạy khi sẵn sàng triển k
    - `ADMIN_PASSWORD_HASH`: **Secret**, hash PBKDF2 do script tạo.
    - `SESSION_SECRET`: **Secret**, secret ngẫu nhiên do script tạo.
 
-   Khi nhập trên Dashboard, điền tên vào ô **Variable name** và chỉ điền giá trị vào ô **Value**. Ví dụ, với dòng script in `ADMIN_PASSWORD_HASH=pbkdf2$sha256$310000$...`, tên là `ADMIN_PASSWORD_HASH`, còn giá trị bắt đầu từ `pbkdf2$sha256$310000$...`; không dán cả phần `ADMIN_PASSWORD_HASH=` vào ô Value và không thêm dấu ngoặc kép. Làm tương tự với `SESSION_SECRET`. Mật khẩu gốc không phải giá trị của Secret này.
+   Khi nhập trên Dashboard, điền tên vào ô **Variable name** và chỉ điền giá trị vào ô **Value**. Ví dụ, với dòng script in `ADMIN_PASSWORD_HASH=pbkdf2$sha256-chain4$100000$...`, tên là `ADMIN_PASSWORD_HASH`, còn giá trị bắt đầu từ `pbkdf2$sha256-chain4$100000$...`; không dán cả phần `ADMIN_PASSWORD_HASH=` vào ô Value và không thêm dấu ngoặc kép. Làm tương tự với `SESSION_SECRET`. Mật khẩu gốc không phải giá trị của Secret này.
 
    Cả ba giá trị phải được đặt cho môi trường production của Worker. Nếu dùng Preview deployments, hãy tắt preview hoặc cấu hình username/hash/session riêng và D1 cô lập cho preview; không dùng secrets production trong preview. Không đưa mật khẩu gốc, hash hoặc session secret vào mã nguồn, biến build, log hay chat.
 

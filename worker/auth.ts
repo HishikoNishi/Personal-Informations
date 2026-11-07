@@ -1,4 +1,4 @@
-export { PBKDF2_ITERATIONS, constantTimeEqual, hashPassword, isValidPasswordHashConfiguration, isValidSessionSecretConfiguration, verifyPassword } from "./password.mjs";
+export { PBKDF2_ITERATIONS, PBKDF2_PASSES, constantTimeEqual, hashPassword, isValidPasswordHashConfiguration, isValidSessionSecretConfiguration, verifyPassword } from "./password.mjs";
 
 export const SESSION_SECONDS = 7 * 24 * 60 * 60;
 export const LOGIN_WINDOW_SECONDS = 15 * 60;

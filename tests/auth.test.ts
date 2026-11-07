@@ -45,7 +45,7 @@ describe("owner authentication primitives", () => {
   it("hashes with PBKDF2 and verifies without accepting another password", async () => {
     const salt = new Uint8Array(16).fill(7);
     const encoded = await hashPassword("test-only-password", salt, 100_000);
-    expect(encoded).toMatch(/^pbkdf2\$sha256\$100000\$/);
+    expect(encoded).toMatch(/^pbkdf2\$sha256-chain4\$100000\$/);
     expect(await verifyPassword("test-only-password", encoded)).toBe(true);
     expect(await verifyPassword("another-password", encoded)).toBe(false);
     expect(await verifyPassword("test-only-password", "not-a-hash")).toBe(false);

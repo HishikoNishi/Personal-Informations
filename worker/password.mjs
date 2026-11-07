@@ -1,5 +1,7 @@
 const encoder = new TextEncoder();
-export const PBKDF2_ITERATIONS = 310_000;
+export const PBKDF2_ITERATIONS = 100_000;
+export const PBKDF2_PASSES = 4;
+const HASH_SCHEME = "sha256-chain4";
 
 function encodeBase64Url(bytes) {
   let binary = "";
@@ -19,17 +21,17 @@ function decodeBase64Url(value) {
 export function inspectPasswordHash(encoded) {
   const parts = encoded.split("$");
   if (parts.length !== 5) return { valid: false, message: "Hash phải có đúng 5 phần ngăn cách bằng dấu $." };
-  if (parts[0] !== "pbkdf2" || parts[1] !== "sha256") return { valid: false, message: "Sai tiền tố hoặc thuật toán; hash cần bắt đầu bằng pbkdf2$sha256$." };
+  if (parts[0] !== "pbkdf2" || !["sha256", HASH_SCHEME].includes(parts[1])) return { valid: false, message: `Sai tiền tố hoặc thuật toán; hash cần bắt đầu bằng pbkdf2$${HASH_SCHEME}$.` };
   const iterations = Number(parts[2]);
-  if (!Number.isInteger(iterations) || iterations < 100_000 || iterations > 1_000_000) {
-    return { valid: false, message: "Số vòng lặp trong hash phải là số nguyên từ 100.000 đến 1.000.000." };
+  if (iterations !== PBKDF2_ITERATIONS) {
+    return { valid: false, message: "Hash phải dùng đúng 100.000 vòng mỗi lượt; Worker Cloudflare giới hạn 100.000 vòng cho một phép PBKDF2." };
   }
   try {
     const salt = decodeBase64Url(parts[3]);
     const digest = decodeBase64Url(parts[4]);
     if (salt.length < 16 || salt.length > 64) return { valid: false, message: "Salt trong hash phải dài từ 16 đến 64 byte." };
     if (digest.length !== 32) return { valid: false, message: "Digest trong hash phải dài đúng 32 byte." };
-    return { valid: true, iterations, salt, digest };
+    return { valid: true, scheme: parts[1], iterations, salt, digest };
   } catch {
     return { valid: false, message: "Salt hoặc digest không phải Base64URL hợp lệ." };
   }
@@ -44,14 +46,32 @@ export function isValidSessionSecretConfiguration(secret) {
   catch { return false; }
 }
 
-async function derivePasswordBits(password, salt, iterations, cryptoApi) {
-  const key = await cryptoApi.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveBits"]);
-  return new Uint8Array(await cryptoApi.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations }, key, 256));
+function asArrayBuffer(bytes) {
+  const copy = new Uint8Array(bytes.byteLength);
+  copy.set(bytes);
+  return copy.buffer;
+}
+
+async function derivePasswordBits(passwordBytes, salt, iterations, cryptoApi) {
+  const key = await cryptoApi.subtle.importKey("raw", passwordBytes, "PBKDF2", false, ["deriveBits"]);
+  return new Uint8Array(await cryptoApi.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: asArrayBuffer(salt), iterations }, key, 256));
+}
+
+async function derivePasswordHash(passwordBytes, salt, iterations, passes, cryptoApi) {
+  let derived = passwordBytes;
+  for (let pass = 0; pass < passes; pass++) {
+    const stageSalt = new Uint8Array(salt.length + 1);
+    stageSalt.set(salt);
+    stageSalt[salt.length] = pass;
+    derived = await derivePasswordBits(derived, stageSalt, iterations, cryptoApi);
+  }
+  return derived;
 }
 
 export async function hashPassword(password, salt = globalThis.crypto.getRandomValues(new Uint8Array(16)), iterations = PBKDF2_ITERATIONS, cryptoApi = globalThis.crypto) {
-  const bits = await derivePasswordBits(password, salt, iterations, cryptoApi);
-  return `pbkdf2$sha256$${iterations}$${encodeBase64Url(salt)}$${encodeBase64Url(bits)}`;
+  if (iterations !== PBKDF2_ITERATIONS) throw new RangeError("Cloudflare Workers supports at most 100,000 PBKDF2 iterations per pass.");
+  const digest = await derivePasswordHash(encoder.encode(password), salt, iterations, PBKDF2_PASSES, cryptoApi);
+  return `pbkdf2$${HASH_SCHEME}$${iterations}$${encodeBase64Url(salt)}$${encodeBase64Url(digest)}`;
 }
 
 export function constantTimeEqual(left, right) {
@@ -64,6 +84,7 @@ export function constantTimeEqual(left, right) {
 export async function verifyPassword(password, encoded, cryptoApi = globalThis.crypto) {
   const parsed = inspectPasswordHash(encoded);
   if (!parsed.valid) return false;
-  const actual = await derivePasswordBits(password, parsed.salt, parsed.iterations, cryptoApi);
+  const passes = parsed.scheme === HASH_SCHEME ? PBKDF2_PASSES : 1;
+  const actual = await derivePasswordHash(encoder.encode(password), parsed.salt, parsed.iterations, passes, cryptoApi);
   return constantTimeEqual(actual, parsed.digest);
 }

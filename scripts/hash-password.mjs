@@ -1,6 +1,7 @@
 import { stdin, stdout } from "node:process";
 import { emitKeypressEvents } from "node:readline";
 import { randomBytes, webcrypto } from "node:crypto";
+import { hashPassword, PBKDF2_ITERATIONS } from "../worker/password.mjs";
 
 function readHiddenPassword() {
   if (!stdin.isTTY || typeof stdin.setRawMode !== "function") {
@@ -32,11 +33,7 @@ function readHiddenPassword() {
 try {
   const password = await readHiddenPassword();
   if (password.length < 12 || password.length > 1024) throw new Error("Mật khẩu cần dài từ 12 đến 1024 ký tự.");
-  const salt = randomBytes(16);
-  const key = await webcrypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
-  const hash = new Uint8Array(await webcrypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 310_000 }, key, 256));
-  const encode = (bytes) => Buffer.from(bytes).toString("base64url");
-  const passwordHash = `pbkdf2$sha256$310000$${encode(salt)}$${encode(hash)}`;
+  const passwordHash = await hashPassword(password, randomBytes(16), PBKDF2_ITERATIONS, webcrypto);
   const sessionSecret = randomBytes(32).toString("base64url");
   console.log(`ADMIN_PASSWORD_HASH=${passwordHash}`);
   console.log(`SESSION_SECRET=${sessionSecret}`);
