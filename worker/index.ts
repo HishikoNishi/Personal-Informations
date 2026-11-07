@@ -118,7 +118,11 @@ export default {
     if (!url.pathname.startsWith("/api/")) return env.ASSETS.fetch(request);
     try {
       return await handleApi(request, env);
-    } catch {
+    } catch (error) {
+      console.error("Worker API request failed", {
+        path: url.pathname,
+        error: error instanceof Error ? `${error.name}: ${error.message}` : "Unknown error",
+      });
       return jsonResponse({ error: "Không thể xử lý yêu cầu lúc này." }, 500, url.pathname.startsWith("/api/admin/") || url.pathname.startsWith("/api/auth/"));
     }
   },
