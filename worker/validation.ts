@@ -44,6 +44,7 @@ function validateFieldMap(value: unknown, maxFields = 60): value is Record<strin
     if (!/^[A-Za-z][A-Za-z0-9_-]{0,59}$/.test(key) || !isRecord(field) || !isVisibility(field.visibility) || !own(field, "value")) return false;
     if (Object.keys(field).some((fieldKey) => fieldKey !== "value" && fieldKey !== "visibility")) return false;
     if (["url", "repoUrl", "liveUrl"].includes(key) && !validHttpUrl(field.value)) return false;
+    if (key === "photo" && (typeof field.value !== "string" || (field.value !== "" && !/^\/api\/images\/[A-Za-z0-9_-]{1,80}$/.test(field.value) && !validHttpUrl(field.value)))) return false;
     if (key === "style" && (typeof field.value !== "string" || !(PROJECT_STYLES as readonly string[]).includes(field.value))) return false;
     if (key === "icon" && (typeof field.value !== "string" || !(ICONS as readonly string[]).includes(field.value))) return false;
     return validatePlain(field.value, key, 0, 50);
@@ -92,6 +93,26 @@ export function validateProjectList(value: unknown): value is ProjectDocument[] 
 
 export function validateSectionKey(value: string): value is SectionKey {
   return (SECTION_KEYS as readonly string[]).includes(value);
+}
+
+export function validateSectionSet(value: unknown): value is Record<SectionKey, SectionDocument> {
+  return isRecord(value) && Object.keys(value).length === SECTION_KEYS.length &&
+    SECTION_KEYS.every((key) => validateSectionDocument(key, value[key]));
+}
+
+export function validateImageMetadata(value: unknown): value is { id: string; mime: string; caption: EditableField; position: number; visibility: Visibility; created_at?: string } {
+  return isRecord(value) && typeof value.id === "string" && idPattern.test(value.id) &&
+    ["image/jpeg", "image/png", "image/webp"].includes(String(value.mime)) &&
+    isRecord(value.caption) && isVisibility(value.caption.visibility) && localized(value.caption.value, 300) &&
+    Number.isInteger(value.position) && (value.position as number) >= 0 && isVisibility(value.visibility) &&
+    (!own(value, "created_at") || (typeof value.created_at === "string" && value.created_at.length <= 64));
+}
+
+export function imageMagicMatches(mime: string, bytes: Uint8Array): boolean {
+  if (mime === "image/jpeg") return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  if (mime === "image/png") return bytes.length >= 8 && bytes.slice(0, 8).join(",") === "137,80,78,71,13,10,26,10";
+  if (mime === "image/webp") return bytes.length >= 12 && String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" && String.fromCharCode(...bytes.slice(8, 12)) === "WEBP";
+  return false;
 }
 
 export function validateImageInput(value: unknown): value is { id?: string; mime: string; bytes: number[]; caption: EditableField; position: number; visibility: Visibility } {

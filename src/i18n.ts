@@ -14,7 +14,7 @@ export const ui = {
     gallery: "Một vài khoảnh khắc", galleryCaption: "Góc ảnh của mình", healthPrivacy: "Chỉ ghi những gì bạn thấy thoải mái chia sẻ.",
     placeholder: "Chưa điền", copy: "Sao chép", copied: "Đã sao chép", copyLabel: "Sao chép {name}", copiedLabel: "Đã sao chép {name}",
     noCopy: "Chưa có thông tin để sao chép", copyError: "Chưa sao chép được. Hãy thử lại.",
-    viewGithub: "Xem trên GitHub", footer: "Một góc nhỏ trên internet.", thanks: "Cảm ơn bạn đã ghé chơi.",
+    viewGithub: "Xem trên GitHub", viewLive: "Mở dự án", footer: "Một góc nhỏ trên internet.", thanks: "Cảm ơn bạn đã ghé chơi.",
   },
   en: {
     language: "Language", themeLight: "Switch to light mode", themeDark: "Switch to dark mode",
@@ -28,7 +28,7 @@ export const ui = {
     gallery: "A few moments", galleryCaption: "My photo corner", healthPrivacy: "Only share what feels comfortable.",
     placeholder: "Not filled in", copy: "Copy", copied: "Copied", copyLabel: "Copy {name}", copiedLabel: "Copied {name}",
     noCopy: "Nothing to copy yet", copyError: "Couldn't copy that. Please try again.",
-    viewGithub: "View on GitHub", footer: "A little corner of the internet.", thanks: "Thanks for stopping by.",
+    viewGithub: "View on GitHub", viewLive: "Open project", footer: "A little corner of the internet.", thanks: "Thanks for stopping by.",
   },
 } as const;
 

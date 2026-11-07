@@ -1,8 +1,10 @@
 /// <reference types="@cloudflare/workers-types" />
 import { readImage, readPublicSnapshot } from "./db";
+import { adminRoute } from "./admin";
 import { expiredSessionCookie, getCookie, hasCsrfHeader, isOwnerRequest, isRateLimited, SESSION_COOKIE, sessionCookie, signSession, verifyPassword } from "./auth";
 import { isRecord } from "./validation";
 import type { Env } from "./model";
+import { imageMagicMatches as hasImageMagic } from "./validation";
 
 const noStore = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" };
 const jsonResponse = (value: unknown, status = 200, admin = false, extraHeaders: HeadersInit = {}) => new Response(JSON.stringify(value), {
@@ -76,13 +78,6 @@ async function handleAuth(request: Request, env: Env, pathname: string): Promise
   return jsonResponse({ error: "Không tìm thấy API." }, 404, true);
 }
 
-function imageMagicMatches(mime: string, bytes: Uint8Array): boolean {
-  if (mime === "image/jpeg") return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
-  if (mime === "image/png") return bytes.length >= 8 && bytes.slice(0, 8).join(",") === "137,80,78,71,13,10,26,10";
-  if (mime === "image/webp") return bytes.length >= 12 && String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" && String.fromCharCode(...bytes.slice(8, 12)) === "WEBP";
-  return false;
-}
-
 async function handleApi(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const pathname = url.pathname;
@@ -107,7 +102,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   if (pathname.startsWith("/api/admin/")) {
     if (!(await isOwnerRequest(request, env.SESSION_SECRET))) return jsonResponse({ error: "Cần đăng nhập để tiếp tục." }, 401, true);
     if (!hasCsrfHeader(request) && request.method !== "GET") return jsonResponse({ error: "Yêu cầu không hợp lệ." }, 403, true);
-    return jsonResponse({ error: "Không tìm thấy API." }, 404, true);
+    return adminRoute(request, env, pathname);
   }
   return jsonResponse({ error: "Không tìm thấy API." }, 404);
 }
@@ -124,4 +119,4 @@ export default {
   },
 } satisfies ExportedHandler<Env>;
 
-export { handleApi, imageMagicMatches, noStore };
+export { handleApi, hasImageMagic as imageMagicMatches, noStore };
