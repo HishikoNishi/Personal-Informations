@@ -1518,8 +1518,6 @@ h3 {
 
 .owner-control { white-space: nowrap; padding: 7px 9px; }
 .owner-control.selected { color: var(--accent); border-color: var(--accent); }
-.footer-login { border: 0; background: transparent; color: var(--muted); font-size: 11px; text-decoration: underline; text-underline-offset: 3px; }
-.footer-login:hover { color: var(--accent); }
 .editor-panel { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); display: grid; gap: 18px; }
 .editor-heading,.editor-section-title,.editor-item-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .editor-heading { color: var(--accent); }
@@ -1550,8 +1548,6 @@ h3 {
 .dirty-indicator { color: var(--muted); font-size: 11px; margin-right: auto; }
 .dirty-indicator.is-dirty { color: #bc7048; }
 .app-toast { position: fixed; z-index: 15; bottom: 25px; left: 50%; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); color: var(--text); box-shadow: 0 8px 30px #0002; font-size: 12px; }
-.password-control { display: flex; gap: 8px; }
-.password-control .text-input { flex: 1; min-width: 0; }
 .photo-gallery .gallery-photo { overflow: hidden; aspect-ratio: 1; border: 1px solid var(--border); border-radius: 12px; background: var(--cell); }
 .gallery-photo img { display: block; width: 100%; height: calc(100% - 40px); object-fit: cover; }
 .gallery-photo figcaption { min-height: 40px; padding: 9px; font-size: 11px; overflow: hidden; }

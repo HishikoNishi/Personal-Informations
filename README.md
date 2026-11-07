@@ -21,6 +21,13 @@ Wrangler chạy Worker cùng D1 cục bộ và phục vụ ứng dụng từ `di
 2. Chạy `node scripts/hash-password.mjs` trong terminal tương tác. Nhập mật khẩu tại lời nhắc ẩn; lệnh in hash PBKDF2 và session secret ngẫu nhiên, không in mật khẩu.
 3. Điền hai giá trị được tạo vào `.dev.vars` dưới các tên `ADMIN_PASSWORD_HASH` và `SESSION_SECRET`.
 4. Khởi động lại `npm run worker:dev` sau khi đổi `.dev.vars`.
+5. Mở trang cục bộ, mở Developer Tools → Console, rồi gọi hàm đăng nhập:
+
+   ```js
+   await window.profileLogin("owner", "YOUR_PASSWORD")
+   ```
+
+   Thay `YOUR_PASSWORD` bằng mật khẩu của bạn. Username của tài khoản đơn là `owner`. Không lưu hoặc chia sẻ dòng lệnh có mật khẩu.
 
 `.dev.vars` và dữ liệu Wrangler cục bộ đã được Git bỏ qua. Không chia sẻ hoặc commit chúng. Đăng nhập dùng cookie HttpOnly/Secure/SameSite=Strict, khóa sau năm lần sai trong 15 phút và yêu cầu CSRF header cùng Origin phù hợp cho mọi thao tác ghi.
 

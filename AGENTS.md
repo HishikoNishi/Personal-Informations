@@ -45,6 +45,7 @@ React 19 + Vite + Tailwind CSS v4 personal profile page in Vietnamese. This is a
 - Public Worker responses must filter private content on the server; every owner API requires authentication and state-changing requests require origin and CSRF checks.
 - Never commit `.dev.vars`, account passwords, password hashes, session secrets, or private image bytes.
 - Owner editing is available only after a signed Worker session; do not add a client-side auth bypass.
+- Owner login is initiated through `window.profileLogin("owner", password)` in the browser console; keep the password runtime-only.
 - Public API responses must be filtered on the server; never rely on the frontend to hide private fields.
 - Validate all owner writes on the Worker. Keep uploaded images in D1, limit them to JPEG/PNG/WebP, and verify image signatures.
 - Use only local Wrangler/D1 during development. Do not run commands against the user's Cloudflare account.

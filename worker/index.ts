@@ -36,8 +36,9 @@ async function handleLogin(request: Request, env: Env): Promise<Response> {
   if (!hasCsrfHeader(request)) return jsonResponse({ error: "Yêu cầu không hợp lệ." }, 403, true);
   let body: unknown;
   try { body = await parseJson(request, 4096); } catch { return jsonResponse({ error: "Yêu cầu không hợp lệ." }, 400, true); }
+  const username = isRecord(body) ? body.username : undefined;
   const password = isRecord(body) ? body.password : undefined;
-  if (typeof password !== "string" || password.length > 1024 || !password) return jsonResponse({ error: "Mật khẩu không đúng." }, 401, true);
+  if (typeof username !== "string" || username.length > 128 || typeof password !== "string" || password.length > 1024 || !password) return jsonResponse({ error: "Tên đăng nhập hoặc mật khẩu không đúng." }, 401, true);
 
   const keySecret = env.SESSION_SECRET ?? "local-rate-limit-key-is-not-a-session-secret";
   const address = request.headers.get("CF-Connecting-IP") ?? request.headers.get("X-Forwarded-For")?.split(",")[0]?.trim() ?? "unknown";
@@ -49,11 +50,11 @@ async function handleLogin(request: Request, env: Env): Promise<Response> {
   }
 
   const validPassword = await verifyPassword(password, env.ADMIN_PASSWORD_HASH ?? DUMMY_PASSWORD_HASH);
-  if (!validPassword || !env.ADMIN_PASSWORD_HASH || !env.SESSION_SECRET) {
+  if (username !== "owner" || !validPassword || !env.ADMIN_PASSWORD_HASH || !env.SESSION_SECRET) {
     await env.DB.prepare("INSERT INTO login_attempts (ip_hash, attempted_at, succeeded) VALUES (?, ?, 0)").bind(ipHash, now).run();
     await env.DB.prepare("DELETE FROM login_attempts WHERE attempted_at < ?").bind(now - 30 * 24 * 60 * 60).run();
     await wait(350);
-    return jsonResponse({ error: "Mật khẩu không đúng." }, 401, true);
+    return jsonResponse({ error: "Tên đăng nhập hoặc mật khẩu không đúng." }, 401, true);
   }
 
   await env.DB.prepare("DELETE FROM login_attempts WHERE ip_hash = ?").bind(ipHash).run();
