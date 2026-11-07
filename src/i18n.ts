@@ -26,7 +26,7 @@ export const ui = {
     defaultFootnote: "You don't have to be perfect, just be yourself.", emptyTitle: "A little space, saved for later.",
     emptyBody: "I haven't shared anything here yet.", emptyHelp: "Show empty fields to see what is waiting to be filled in.",
     gallery: "A few moments", galleryCaption: "My photo corner", healthPrivacy: "Only share what feels comfortable.",
-    placeholder: "Chưa điền", copy: "Copy", copied: "Copied", copyLabel: "Copy {name}", copiedLabel: "Copied {name}",
+    placeholder: "Not filled in", copy: "Copy", copied: "Copied", copyLabel: "Copy {name}", copiedLabel: "Copied {name}",
     noCopy: "Nothing to copy yet", copyError: "Couldn't copy that. Please try again.",
     viewGithub: "View on GitHub", footer: "A little corner of the internet.", thanks: "Thanks for stopping by.",
   },
