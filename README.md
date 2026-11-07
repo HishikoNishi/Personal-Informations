@@ -33,6 +33,12 @@ Không có hộp thoại đăng nhập trên trang; `window.profileLogin(usernam
 
 `ADMIN_PASSWORD_HASH` có dạng `pbkdf2$sha256$<iterations>$<salt-base64url>$<digest-base64url>`. Worker đọc đúng năm phần, chỉ chấp nhận PBKDF2-SHA256 với 100.000–1.000.000 vòng lặp, salt 16–64 byte và digest 32 byte; sau đó so sánh kết quả dẫn xuất bằng phép so sánh thời gian hằng. Script hiện tạo hash với 310.000 vòng lặp. `SESSION_SECRET` là chuỗi Base64URL ngẫu nhiên; cần ít nhất 32 byte sau giải mã.
 
+### Kiểm tra lỗi đăng nhập
+
+Nếu `/api/auth/login` vẫn trả 401, chạy `node scripts/verify-password.mjs` từ thư mục dự án trong terminal tương tác. Nhập mật khẩu gốc và đúng giá trị của `ADMIN_PASSWORD_HASH` khi được nhắc; cả hai trường đều không hiển thị khi gõ. Với Cloudflare, nhập riêng phần giá trị bắt đầu bằng `pbkdf2$...`, không nhập tên biến hoặc tiền tố `ADMIN_PASSWORD_HASH=`. Script dùng chung hàm PBKDF2 với Worker và chỉ in `MATCH` hoặc `NO MATCH`; hash sai tiền tố/thuật toán, sai số phần, Base64URL lỗi hoặc tham số không hợp lệ sẽ in `NO MATCH` kèm lý do định dạng. Không truyền mật khẩu/hash qua đối số lệnh, không chụp màn hình và không chia sẻ chúng.
+
+`MATCH` xác nhận mật khẩu đó khớp với hash đã nhập tại máy này; nó không xác nhận Cloudflare đã lưu cùng hash, username đúng, hoặc Worker production đã triển khai đúng cấu hình. Nếu hiện `NO MATCH`, tạo lại hash bằng `node scripts/hash-password.mjs`, rồi cập nhật đúng giá trị hash trong Secret `ADMIN_PASSWORD_HASH` và triển khai Worker.
+
 `.dev.vars` và dữ liệu Wrangler cục bộ đã được Git bỏ qua. Không chia sẻ hoặc commit chúng. Đăng nhập dùng cookie HttpOnly/Secure/SameSite=Strict và mọi thao tác ghi yêu cầu CSRF header cùng Origin phù hợp.
 
 ## Cloudflare Workers Builds (triển khai production)

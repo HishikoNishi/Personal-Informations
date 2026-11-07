@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import { Icon, type IconName } from "./Icons";
 import { tabs, type LocalizedText, type ProfileCell, type TabId } from "./data/profile";
 import { content, named, t, type Language } from "./i18n";
@@ -140,6 +140,11 @@ export default function App() {
   const [adminContent, setAdminContent] = useState<AdminContent | null>(null);
   const [savedContent, setSavedContent] = useState<AdminContent | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loginBusy, setLoginBusy] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
@@ -147,8 +152,8 @@ export default function App() {
   const [discardAction, setDiscardAction] = useState<"cancel" | "logout" | null>(null);
   const dirty = Boolean(adminContent && savedContent && JSON.stringify(adminContent) !== JSON.stringify(savedContent));
   const localizedUi: Record<Language, Record<string, string>> = {
-    vi: { edit: "Chế độ chỉnh sửa", logout: "Đăng xuất", saving: "Đang lưu…", save: "Lưu thay đổi", cancel: "Hủy", dirty: "Có thay đổi chưa lưu", saved: "Đã lưu thay đổi.", saveError: "Chưa lưu được. Hãy kiểm tra kết nối rồi thử lại.", cancelConfirm: "Bỏ các thay đổi chưa lưu?", export: "Xuất JSON", import: "Nhập JSON", importTitle: "Xem trước bản sao lưu", importConfirm: "Thay thế nội dung hiện tại bằng bản sao lưu này?", importError: "Tệp JSON không hợp lệ hoặc không thể nhập.", importSuccess: "Đã nhập bản sao lưu.", backupInfo: "Bản sao lưu gồm nội dung và ảnh đang lưu.", loading: "Đang tải…" },
-    en: { edit: "Edit mode", logout: "Sign out", saving: "Saving…", save: "Save changes", cancel: "Cancel", dirty: "Unsaved changes", saved: "Changes saved.", saveError: "Could not save. Check your connection and try again.", cancelConfirm: "Discard unsaved changes?", export: "Export JSON", import: "Import JSON", importTitle: "Backup preview", importConfirm: "Replace current content with this backup?", importError: "The JSON file is invalid or could not be imported.", importSuccess: "Backup imported.", backupInfo: "The backup includes content and stored images.", loading: "Loading…" },
+    vi: { login: "Đăng nhập", loginTitle: "Đăng nhập quản trị", loginDescription: "Đăng nhập để chỉnh sửa hồ sơ cá nhân.", username: "Tên đăng nhập", password: "Mật khẩu", loginSubmit: "Đăng nhập", loginBusy: "Đang đăng nhập…", edit: "Chế độ chỉnh sửa", logout: "Đăng xuất", saving: "Đang lưu…", save: "Lưu thay đổi", cancel: "Hủy", dirty: "Có thay đổi chưa lưu", saved: "Đã lưu thay đổi.", saveError: "Chưa lưu được. Hãy kiểm tra kết nối rồi thử lại.", cancelConfirm: "Bỏ các thay đổi chưa lưu?", export: "Xuất JSON", import: "Nhập JSON", importTitle: "Xem trước bản sao lưu", importConfirm: "Thay thế nội dung hiện tại bằng bản sao lưu này?", importError: "Tệp JSON không hợp lệ hoặc không thể nhập.", importSuccess: "Đã nhập bản sao lưu.", backupInfo: "Bản sao lưu gồm nội dung và ảnh đang lưu.", loading: "Đang tải…" },
+    en: { login: "Sign in", loginTitle: "Owner sign in", loginDescription: "Sign in to edit this personal profile.", username: "Username", password: "Password", loginSubmit: "Sign in", loginBusy: "Signing in…", edit: "Edit mode", logout: "Sign out", saving: "Saving…", save: "Save changes", cancel: "Cancel", dirty: "Unsaved changes", saved: "Changes saved.", saveError: "Could not save. Check your connection and try again.", cancelConfirm: "Discard unsaved changes?", export: "Export JSON", import: "Import JSON", importTitle: "Backup preview", importConfirm: "Replace current content with this backup?", importError: "The JSON file is invalid or could not be imported.", importSuccess: "Backup imported.", backupInfo: "The backup includes content and stored images.", loading: "Loading…" },
   };
   const uiText = (key: string) => localizedUi[language][key] ?? key;
   const [language, setLanguage] = useState<Language>(() => {
@@ -169,6 +174,7 @@ export default function App() {
   const [active, setActive] = useState(tabFromHash);
   const [hideEmpty, setHideEmpty] = useState(false);
   const tabList = useRef<HTMLDivElement>(null);
+  const loginDialog = useRef<HTMLDialogElement>(null);
   const api = async (url: string, init: RequestInit = {}) => {
     const headers = new Headers(init.headers);
     if (init.method && init.method !== "GET") headers.set("X-Requested-With", "fetch");
@@ -214,6 +220,13 @@ export default function App() {
     return () => { delete window.profileLogin; };
   }, [authenticated, language]);
   useEffect(() => {
+    if (!loginOpen) return;
+    const dialog = loginDialog.current;
+    if (!dialog) return;
+    if (!dialog.open) dialog.showModal();
+    return () => { if (dialog.open) dialog.close(); };
+  }, [loginOpen]);
+  useEffect(() => {
     const warn = (event: BeforeUnloadEvent) => { if (dirty) { event.preventDefault(); event.returnValue = ""; } };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
@@ -227,6 +240,22 @@ export default function App() {
     setBusy(true);
     try { await api("/api/auth/logout", { method: "POST" }); } catch { /* Local UI still clears the session state. */ }
     setAuthenticated(false); setEditMode(false); setAdminContent(null); setSavedContent(null); await loadPublic(); setBusy(false);
+  };
+  const submitLogin = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setLoginError("");
+    setLoginBusy(true);
+    try {
+      if (!window.profileLogin) throw new Error(language === "vi" ? "Chưa thể đăng nhập lúc này. Hãy tải lại trang rồi thử lại." : "Sign in is unavailable. Reload the page and try again.");
+      await window.profileLogin(loginUsername, loginPassword);
+      setLoginOpen(false);
+      setLoginPassword("");
+    } catch (error) {
+      setLoginError(error instanceof Error ? error.message : language === "vi" ? "Không thể đăng nhập lúc này." : "Unable to sign in right now.");
+      setLoginPassword("");
+    } finally {
+      setLoginBusy(false);
+    }
   };
   const logout = async () => {
     if (dirty) { setDiscardAction("logout"); return; }
@@ -330,7 +359,7 @@ export default function App() {
     tabList.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus({ preventScroll: true });
   }
   return <LanguageContext.Provider value={language}><ProfileContext.Provider value={viewProfile}><HideEmptyContext.Provider value={hideEmpty}><div className={`site${dark ? " dark" : ""}`}><div className="page-shell">
-    <header className="site-header"><a className="wordmark" href="#" aria-label={t(language, "top")}><span className="brand-mark">hn<span>.</span></span><span className="brand-divider" /><span>{t(language, "tagline")}</span></a><div className="header-controls">{authenticated && <><button className={`secondary-button owner-control${editMode ? " selected" : ""}`} aria-pressed={editMode} onClick={() => { if (editMode) void cancelEdits(); else setEditMode(true); }}>{uiText("edit")}</button><button className="secondary-button owner-control" onClick={() => void logout()}>{uiText("logout")}</button></>}<div className="language-toggle" role="group" aria-label={t(language, "language")}><button className={language === "vi" ? "selected" : ""} aria-pressed={language === "vi"} onClick={() => setLanguage("vi")} aria-label="Tiếng Việt">VI</button><span aria-hidden="true">|</span><button className={language === "en" ? "selected" : ""} aria-pressed={language === "en"} onClick={() => setLanguage("en")} aria-label="English">EN</button></div><span className="control-divider" /><ThemeToggle dark={dark} onToggle={() => setDark(!dark)} /></div></header>
+    <header className="site-header"><a className="wordmark" href="#" aria-label={t(language, "top")}><span className="brand-mark">hn<span>.</span></span><span className="brand-divider" /><span>{t(language, "tagline")}</span></a><div className="header-controls">{!authenticated && <button className="secondary-button owner-control" onClick={() => { setLoginError(""); setLoginOpen(true); }}>{uiText("login")}</button>}{authenticated && <><button className={`secondary-button owner-control${editMode ? " selected" : ""}`} aria-pressed={editMode} onClick={() => { if (editMode) void cancelEdits(); else setEditMode(true); }}>{uiText("edit")}</button><button className="secondary-button owner-control" onClick={() => void logout()}>{uiText("logout")}</button></>}<div className="language-toggle" role="group" aria-label={t(language, "language")}><button className={language === "vi" ? "selected" : ""} aria-pressed={language === "vi"} onClick={() => setLanguage("vi")} aria-label="Tiếng Việt">VI</button><span aria-hidden="true">|</span><button className={language === "en" ? "selected" : ""} aria-pressed={language === "en"} onClick={() => setLanguage("en")} aria-label="English">EN</button></div><span className="control-divider" /><ThemeToggle dark={dark} onToggle={() => setDark(!dark)} /></div></header>
     <main><section className="hero" aria-labelledby="profile-name"><div className="hero-profile"><PhotoFrame /><div className="hero-identity"><p className="eyebrow">{t(language, "profile")}</p><h1 id="profile-name">{text(viewProfile.nickname, language)}<span>.</span></h1><p className="real-name">{text(viewProfile.fullName, language)}</p></div><span className="hero-hello" aria-hidden="true">{t(language, "hello")}</span></div>
       {!hideEmpty && <div className="intro-area"><span className="intro-quote" aria-hidden="true">“</span>{text(viewProfile.intro, language) || <PlaceholderTag>{t(language, "introPlaceholder")}</PlaceholderTag>}<span className="intro-guides" aria-hidden="true"><i /><i /></span></div>}
       <div className="hero-bottom"><span><Icon name="pin" size={14} />{text(viewProfile.location, language) || <PlaceholderTag>{t(language, "locationPlaceholder")}</PlaceholderTag>}</span><span>{t(language, "heroNote")}<Icon name="spark" size={13} /></span></div></section>
@@ -339,6 +368,15 @@ export default function App() {
       <section className="content-panel" role="tabpanel" id={`panel-${active}`} aria-labelledby={`tab-${active}`} tabIndex={0}><div key={active} className="panel-content"><div className="panel-heading"><div><h2>{active === 0 ? t(language, "who") : text(tabs[active].label, language)}</h2><p>{text(viewProfile.tabDescriptions[tabs[active].id], language)}</p></div><span className="section-number" aria-hidden="true">0{active + 1}<span>{t(language, "sectionCount")}</span></span></div><TabContent active={tabs[active].id} />{editMode && adminContent && <ProfileEditor activeTab={tabs[active].id} language={language} data={adminContent} setData={setAdminContent as React.Dispatch<React.SetStateAction<AdminContent>>} onUpload={resizeAndUpload} />}</div><div className="panel-footnote"><Icon name="spark" size={14} /><span>{active === 8 ? t(language, "contactFootnote") : t(language, "defaultFootnote")}</span><span className="footnote-line" /></div></section>
     </main><footer className="site-footer"><span>© 2026 {text(viewProfile.nickname, language)}<span className="footer-separator">/</span>{t(language, "footer")}</span><span className="footer-signoff">{t(language, "thanks")}<Icon name="arrow" size={15} /></span></footer>
     {editMode && adminContent && <div className="editor-sticky" role="region" aria-label={uiText("edit")}><span className={dirty ? "dirty-indicator is-dirty" : "dirty-indicator"}>{dirty ? uiText("dirty") : uiText("saveHint")}</span><button className="secondary-button" onClick={() => void exportBackup()} disabled={busy}>{uiText("export")}</button><label className="secondary-button import-button">{uiText("import")}<input type="file" accept="application/json,.json" onChange={importFile} /></label><button className="secondary-button" onClick={() => void cancelEdits()} disabled={busy}>{uiText("cancel")}</button><button className="primary-button" onClick={() => void saveEdits()} disabled={busy || !dirty}>{busy ? uiText("saving") : uiText("save")}</button></div>}
+    {loginOpen && !authenticated && <dialog ref={loginDialog} className="modal login-modal" aria-labelledby="login-title" onCancel={(event) => { event.preventDefault(); setLoginOpen(false); }} onClose={() => setLoginOpen(false)} onClick={(event) => { if (event.target === event.currentTarget) setLoginOpen(false); }}>
+      <div className="modal-heading"><div><h2 id="login-title">{uiText("loginTitle")}</h2><p className="modal-description">{uiText("loginDescription")}</p></div><button type="button" className="icon-button" aria-label={uiText("cancel")} onClick={() => setLoginOpen(false)}><Icon name="close" /></button></div>
+      <form className="login-form" onSubmit={(event) => void submitLogin(event)}>
+        <label className="form-label">{uiText("username")}<input className="text-input" name="username" type="text" autoComplete="username" maxLength={128} required autoFocus value={loginUsername} onChange={(event) => setLoginUsername(event.target.value)} /></label>
+        <label className="form-label">{uiText("password")}<input className="text-input" name="password" type="password" autoComplete="current-password" maxLength={1024} required value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} /></label>
+        {loginError && <p className="form-error" role="alert">{loginError}</p>}
+        <div className="form-actions"><button type="button" className="secondary-button" disabled={loginBusy} onClick={() => setLoginOpen(false)}>{uiText("cancel")}</button><button type="submit" className="primary-button" disabled={loginBusy}>{loginBusy ? uiText("loginBusy") : uiText("loginSubmit")}</button></div>
+      </form>
+    </dialog>}
     {notice && <div className="app-toast" role="status">{notice}</div>}
     {importCandidate !== null && <dialog className="modal" open><div className="modal-heading"><h2>{uiText("importTitle")}</h2><button className="icon-button" aria-label={uiText("cancel")} onClick={() => setImportCandidate(null)}><Icon name="close" /></button></div><p className="modal-description">{uiText("backupInfo")} {uiText("importConfirm")}<br />{language === "vi" ? `Dự án: ${(importCandidate as { projects: unknown[] }).projects.length} · Ảnh: ${(importCandidate as { images: unknown[] }).images.length}` : `Projects: ${(importCandidate as { projects: unknown[] }).projects.length} · Photos: ${(importCandidate as { images: unknown[] }).images.length}`}</p><div className="form-actions"><button className="secondary-button" onClick={() => setImportCandidate(null)}>{uiText("cancel")}</button><button className="primary-button" disabled={busy} onClick={() => void confirmImport()}>{busy ? uiText("saving") : uiText("import")}</button></div></dialog>}
     {discardAction && <dialog className="modal" open><div className="modal-heading"><h2>{uiText("cancelConfirm")}</h2><button className="icon-button" aria-label={uiText("cancel")} onClick={() => setDiscardAction(null)}><Icon name="close" /></button></div><div className="form-actions"><button className="secondary-button" onClick={() => setDiscardAction(null)}>{language === "vi" ? "Tiếp tục chỉnh sửa" : "Keep editing"}</button><button className="primary-button" onClick={() => void confirmDiscard()}>{language === "vi" ? "Bỏ thay đổi" : "Discard changes"}</button></div></dialog>}

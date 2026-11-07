@@ -1,4 +1,5 @@
-export const PBKDF2_ITERATIONS = 310_000;
+export { PBKDF2_ITERATIONS, constantTimeEqual, hashPassword, isValidPasswordHashConfiguration, isValidSessionSecretConfiguration, verifyPassword } from "./password.mjs";
+
 export const SESSION_SECONDS = 7 * 24 * 60 * 60;
 export const LOGIN_WINDOW_SECONDS = 15 * 60;
 export const MAX_FAILED_LOGINS = 5;
@@ -19,62 +20,9 @@ function encodeBase64Url(bytes: Uint8Array): string {
 }
 
 function decodeBase64Url(value: string): Uint8Array {
-  if (!/^[A-Za-z0-9_-]+$/.test(value)) throw new Error("Invalid Base64URL value");
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
   const binary = atob(normalized + "=".repeat((4 - normalized.length % 4) % 4));
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
-}
-
-export function isValidPasswordHashConfiguration(encoded: string): boolean {
-  const parts = encoded.split("$");
-  if (parts.length !== 5 || parts[0] !== "pbkdf2" || parts[1] !== "sha256") return false;
-  const iterations = Number(parts[2]);
-  if (!Number.isInteger(iterations) || iterations < 100_000 || iterations > 1_000_000) return false;
-  try {
-    const salt = decodeBase64Url(parts[3]);
-    const digest = decodeBase64Url(parts[4]);
-    return salt.length >= 16 && salt.length <= 64 && digest.length === 32;
-  } catch {
-    return false;
-  }
-}
-
-export function isValidSessionSecretConfiguration(secret: string): boolean {
-  try { return decodeBase64Url(secret).length >= 32; }
-  catch { return false; }
-}
-
-async function derivePasswordBits(password: string, salt: Uint8Array, iterations: number): Promise<Uint8Array> {
-  const key = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveBits"]);
-  return new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: asArrayBuffer(salt), iterations }, key, 256));
-}
-
-export async function hashPassword(password: string, salt = crypto.getRandomValues(new Uint8Array(16)), iterations = PBKDF2_ITERATIONS): Promise<string> {
-  const bits = await derivePasswordBits(password, salt, iterations);
-  return `pbkdf2$sha256$${iterations}$${encodeBase64Url(salt)}$${encodeBase64Url(bits)}`;
-}
-
-export function constantTimeEqual(left: Uint8Array, right: Uint8Array): boolean {
-  const length = Math.max(left.length, right.length);
-  let difference = left.length ^ right.length;
-  for (let index = 0; index < length; index++) difference |= (left[index % (left.length || 1)] ?? 0) ^ (right[index % (right.length || 1)] ?? 0);
-  return difference === 0;
-}
-
-export async function verifyPassword(password: string, encoded: string): Promise<boolean> {
-  const parts = encoded.split("$");
-  if (parts.length !== 5 || parts[0] !== "pbkdf2" || parts[1] !== "sha256") return false;
-  const iterations = Number(parts[2]);
-  if (!Number.isInteger(iterations) || iterations < 100_000 || iterations > 1_000_000) return false;
-  try {
-    const salt = decodeBase64Url(parts[3]);
-    const expected = decodeBase64Url(parts[4]);
-    if (salt.length < 16 || salt.length > 64 || expected.length !== 32) return false;
-    const actual = await derivePasswordBits(password, salt, iterations);
-    return constantTimeEqual(actual, expected);
-  } catch {
-    return false;
-  }
 }
 
 type SessionPayload = { sub: "owner"; iat: number; exp: number; nonce: string };

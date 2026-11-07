@@ -1152,6 +1152,22 @@ h3 {
   line-height: 1.8;
   margin-top: 10px;
 }
+.login-modal .modal-heading {
+  align-items: flex-start;
+}
+.login-modal .modal-description {
+  margin: 6px 0 0;
+}
+.login-form .form-label {
+  margin-top: 13px;
+}
+.login-form .text-input {
+  display: block;
+  margin-top: 8px;
+}
+.login-form .form-actions {
+  margin-top: 23px;
+}
 @keyframes appear {
   from {
     opacity: 0;
