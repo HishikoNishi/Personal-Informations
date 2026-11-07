@@ -19,9 +19,29 @@ function encodeBase64Url(bytes: Uint8Array): string {
 }
 
 function decodeBase64Url(value: string): Uint8Array {
+  if (!/^[A-Za-z0-9_-]+$/.test(value)) throw new Error("Invalid Base64URL value");
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
   const binary = atob(normalized + "=".repeat((4 - normalized.length % 4) % 4));
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+
+export function isValidPasswordHashConfiguration(encoded: string): boolean {
+  const parts = encoded.split("$");
+  if (parts.length !== 5 || parts[0] !== "pbkdf2" || parts[1] !== "sha256") return false;
+  const iterations = Number(parts[2]);
+  if (!Number.isInteger(iterations) || iterations < 100_000 || iterations > 1_000_000) return false;
+  try {
+    const salt = decodeBase64Url(parts[3]);
+    const digest = decodeBase64Url(parts[4]);
+    return salt.length >= 16 && salt.length <= 64 && digest.length === 32;
+  } catch {
+    return false;
+  }
+}
+
+export function isValidSessionSecretConfiguration(secret: string): boolean {
+  try { return decodeBase64Url(secret).length >= 32; }
+  catch { return false; }
 }
 
 async function derivePasswordBits(password: string, salt: Uint8Array, iterations: number): Promise<Uint8Array> {

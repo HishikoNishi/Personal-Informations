@@ -29,7 +29,7 @@ Wrangler chạy Worker cùng D1 cục bộ và phục vụ ứng dụng từ `di
 
    Thay hai giá trị mẫu bằng thông tin đăng nhập của bạn. Worker so sánh username với `ADMIN_USERNAME` và kiểm tra mật khẩu với `ADMIN_PASSWORD_HASH`. Không lưu hoặc chia sẻ dòng lệnh có mật khẩu.
 
-Không có hộp thoại đăng nhập trên trang; `window.profileLogin(username, password)` gửi POST JSON đến `/api/auth/login`. Thiếu hoặc để rỗng bất kỳ biến nào trong ba biến trên sẽ trả về HTTP 503 với `Chưa cấu hình đăng nhập`. Sai thông tin trả về HTTP 401. Sau năm lần sai trong 15 phút từ cùng địa chỉ IP, Worker trả HTTP 429 cùng thông báo giới hạn riêng.
+Không có hộp thoại đăng nhập trên trang; `window.profileLogin(username, password)` gửi POST JSON đến `/api/auth/login`. Thiếu/rỗng biến hoặc hash/secret sai định dạng sẽ trả HTTP 503 với `Chưa cấu hình đăng nhập`. Sai thông tin đăng nhập trả HTTP 401. Sau năm lần sai trong 15 phút từ cùng địa chỉ IP, Worker trả HTTP 429 cùng thông báo giới hạn riêng.
 
 `ADMIN_PASSWORD_HASH` có dạng `pbkdf2$sha256$<iterations>$<salt-base64url>$<digest-base64url>`. Worker đọc đúng năm phần, chỉ chấp nhận PBKDF2-SHA256 với 100.000–1.000.000 vòng lặp, salt 16–64 byte và digest 32 byte; sau đó so sánh kết quả dẫn xuất bằng phép so sánh thời gian hằng. Script hiện tạo hash với 310.000 vòng lặp. `SESSION_SECRET` là chuỗi Base64URL ngẫu nhiên; cần ít nhất 32 byte sau giải mã.
 

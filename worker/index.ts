@@ -1,7 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 import { readImage, readPublicSnapshot } from "./db";
 import { adminRoute } from "./admin";
-import { expiredSessionCookie, getCookie, hasCsrfHeader, isOwnerRequest, isRateLimited, SESSION_COOKIE, sessionCookie, signSession, verifyPassword } from "./auth";
+import { expiredSessionCookie, getCookie, hasCsrfHeader, isOwnerRequest, isRateLimited, isValidPasswordHashConfiguration, isValidSessionSecretConfiguration, SESSION_COOKIE, sessionCookie, signSession, verifyPassword } from "./auth";
 import { isRecord } from "./validation";
 import type { Env } from "./model";
 import { imageMagicMatches as hasImageMagic } from "./validation";
@@ -35,7 +35,9 @@ async function handleLogin(request: Request, env: Env): Promise<Response> {
   const username = env.ADMIN_USERNAME?.trim();
   const passwordHash = env.ADMIN_PASSWORD_HASH?.trim();
   const sessionSecret = env.SESSION_SECRET?.trim();
-  if (!username || !passwordHash || !sessionSecret) return jsonResponse({ error: "Chưa cấu hình đăng nhập" }, 503, true);
+  if (!username || !passwordHash || !sessionSecret || !isValidPasswordHashConfiguration(passwordHash) || !isValidSessionSecretConfiguration(sessionSecret)) {
+    return jsonResponse({ error: "Chưa cấu hình đăng nhập" }, 503, true);
+  }
   if (!hasCsrfHeader(request)) return jsonResponse({ error: "Yêu cầu không hợp lệ." }, 403, true);
   let body: unknown;
   try { body = await parseJson(request, 4096); } catch { return jsonResponse({ error: "Yêu cầu không hợp lệ." }, 400, true); }
