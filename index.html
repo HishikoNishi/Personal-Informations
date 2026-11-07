@@ -4,20 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f1f4f6" />
-    <script>
-      try {
-        const saved = localStorage.getItem('theme');
-        const dark = saved === 'light' || saved === 'dark'
-          ? saved === 'dark'
-          : window.matchMedia('(prefers-color-scheme: dark)').matches;
-        document.documentElement.classList.toggle('dark', dark);
-        document.querySelector('meta[name="theme-color"]').content = dark ? '#0b1114' : '#f1f4f6';
-      } catch {
-        const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        document.documentElement.classList.toggle('dark', dark);
-        document.querySelector('meta[name="theme-color"]').content = dark ? '#0b1114' : '#f1f4f6';
-      }
-    </script>
+    <script src="./theme-init.js"></script>
     <meta
       name="description"
       content="Một góc nhỏ của HishikoNíhi — Trang Hùng Gia Bảo. Sở thích, câu chuyện thường ngày và những điều để chúng mình hiểu nhau hơn."

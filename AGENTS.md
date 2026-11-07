@@ -5,12 +5,14 @@ React 19 + Vite + Tailwind CSS v4 personal profile page in Vietnamese. This is a
 ## Project structure
 
 - `src/main.tsx` mounts `src/App.tsx` and imports `src/index.css`.
-- `src/App.tsx` contains the UI and interaction logic.
+- `src/App.tsx` contains the page, auth dialog, content loading and save flows; `src/Editor.tsx` contains owner editing controls.
+- `src/content.ts` adapts the Worker content shape and provides the bundled-data fallback.
 - `src/Icons.tsx` contains the icon set.
 - `src/index.css` contains Tailwind imports, local font faces, theme tokens and component styles.
 - `src/data/profile.ts` is the editable source for personal content.
 - `src/i18n.ts` contains the typed Vietnamese and English UI strings.
 - `worker/index.ts` routes Worker API requests; `worker/db.ts`, `worker/defaults.ts`, and `worker/validation.ts` own persistence, seed data, and input checks.
+- `worker/auth.ts` implements owner sessions and `worker/admin.ts` implements authenticated editing and backup routes.
 - `migrations/` contains D1 schema migrations; `tests/` contains Vitest coverage.
 - `index.html` contains document metadata and startup theme handling.
 - `public/` contains static assets; put the profile photo at `public/images/avatar.jpg`.
@@ -25,7 +27,7 @@ React 19 + Vite + Tailwind CSS v4 personal profile page in Vietnamese. This is a
 - `npm test` runs Vitest.
 - `npm run worker:dev` starts the local Cloudflare Worker.
 - `npm run db:migrate:local` applies D1 migrations to the local database.
-- `node scripts/hash-password.mjs` securely prompts for an owner password and prints local secret values.
+- `node scripts/hash-password.mjs` securely prompts for an owner password and prints only its hash plus a random session secret.
 - `npm run format` formats files with oxfmt.
 
 ## Content and implementation rules
@@ -42,5 +44,10 @@ React 19 + Vite + Tailwind CSS v4 personal profile page in Vietnamese. This is a
 - Never run Wrangler commands against a remote account during development; use local D1 and `wrangler dev`.
 - Public Worker responses must filter private content on the server; every owner API requires authentication and state-changing requests require origin and CSRF checks.
 - Never commit `.dev.vars`, account passwords, password hashes, session secrets, or private image bytes.
+- Owner editing is available only after a signed Worker session; do not add a client-side auth bypass.
+- Public API responses must be filtered on the server; never rely on the frontend to hide private fields.
+- Validate all owner writes on the Worker. Keep uploaded images in D1, limit them to JPEG/PNG/WebP, and verify image signatures.
+- Use only local Wrangler/D1 during development. Do not run commands against the user's Cloudflare account.
+- Keep owner UI text bilingual and preserve all nine tabs. Visitors must not see editing controls.
 
 Tailwind CSS v4 is configured through `@tailwindcss/vite`; global element styles belong inside `@layer base` so utility classes remain effective.
