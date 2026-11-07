@@ -10,6 +10,8 @@ React 19 + Vite + Tailwind CSS v4 personal profile page in Vietnamese. This is a
 - `src/index.css` contains Tailwind imports, local font faces, theme tokens and component styles.
 - `src/data/profile.ts` is the editable source for personal content.
 - `src/i18n.ts` contains the typed Vietnamese and English UI strings.
+- `worker/index.ts` routes Worker API requests; `worker/db.ts`, `worker/defaults.ts`, and `worker/validation.ts` own persistence, seed data, and input checks.
+- `migrations/` contains D1 schema migrations; `tests/` contains Vitest coverage.
 - `index.html` contains document metadata and startup theme handling.
 - `public/` contains static assets; put the profile photo at `public/images/avatar.jpg`.
 - `vite.config.ts` configures Vite, React, Tailwind CSS and the `@` alias.
@@ -20,6 +22,9 @@ React 19 + Vite + Tailwind CSS v4 personal profile page in Vietnamese. This is a
 - `npm run typecheck` runs `tsc --noEmit`.
 - `npm run build` creates the production site in `dist/`.
 - `npm run preview` serves the production build locally.
+- `npm test` runs Vitest.
+- `npm run worker:dev` starts the local Cloudflare Worker.
+- `npm run db:migrate:local` applies D1 migrations to the local database.
 - `npm run format` formats files with oxfmt.
 
 ## Content and implementation rules
@@ -32,6 +37,9 @@ React 19 + Vite + Tailwind CSS v4 personal profile page in Vietnamese. This is a
 - Avoid new runtime dependencies unless required; ask before adding one.
 - Keep personal content editable in `src/data/profile.ts`; do not duplicate owner facts in UI components.
 - Use URL hash navigation for tabs and guarded localStorage access for persistent preferences.
-- Keep Cloudflare Pages builds independent of external design tools and environment variables.
+- Keep Cloudflare Worker development independent of remote account access and undeclared environment variables.
+- Never run Wrangler commands against a remote account during development; use local D1 and `wrangler dev`.
+- Public Worker responses must filter private content on the server; every owner API requires authentication and state-changing requests require origin and CSRF checks.
+- Never commit `.dev.vars`, account passwords, password hashes, session secrets, or private image bytes.
 
 Tailwind CSS v4 is configured through `@tailwindcss/vite`; global element styles belong inside `@layer base` so utility classes remain effective.

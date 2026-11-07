@@ -1,7 +1,20 @@
 {
   "name": "personal-informations",
+  "main": "worker/index.ts",
   "compatibility_date": "2026-01-01",
   "assets": {
-    "directory": "./dist"
-  }
+    "binding": "ASSETS",
+    "directory": "./dist",
+    "run_worker_first": ["/api/*"],
+    "not_found_handling": "single-page-application"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "personal-informations",
+      // Replace this placeholder with the ID returned by `wrangler d1 create`.
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ]
 }

@@ -4,12 +4,13 @@
 
 Toàn bộ nội dung hồ sơ được lưu trong `src/data/profile.ts`. Hãy chỉnh thông tin tại đó; các mục chưa biết để trống sẽ hiển thị “Chưa điền”. Đặt ảnh đại diện tại `public/images/avatar.jpg`, rồi điền đường dẫn `/images/avatar.jpg` vào trường `photo` trong tệp hồ sơ.
 
-Chạy `npm run dev` để xem trang khi phát triển. Dùng `npm run typecheck` để kiểm tra kiểu và `npm run build` để tạo bản dựng trong thư mục `dist/`.
+Chạy `npm run dev` để xem giao diện độc lập. Dùng `npm run typecheck`, `npm test` và `npm run build` để kiểm tra mã và tạo bản dựng trong `dist/`.
 
-## Deploy
+## Cloudflare Worker cục bộ
 
-- Lệnh build: `npm run build`
-- Thư mục đầu ra: `dist`
-- Phiên bản Node.js: `22.22.0` (được ghim trong `.mise.toml`).
+- Tạo bản dựng giao diện: `npm run build`.
+- Áp dụng migration vào D1 cục bộ: `npm run db:migrate:local`.
+- Chạy Worker cùng D1 cục bộ: `npm run worker:dev`.
+- Wrangler phục vụ SPA từ `dist/` và chuyển `/api/*` đến Worker.
 
-Trang có thể triển khai trực tiếp trên Cloudflare Pages với các thiết lập trên.
+Worker tự seed D1 cục bộ từ dữ liệu hiện có trong `src/data/profile.ts` khi database trống. Phần hướng dẫn triển khai Worker sẽ được hoàn thiện cùng cấu hình Workers Builds.
