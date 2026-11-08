@@ -1561,6 +1561,7 @@ h3 {
 .upload-option input,.import-button input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
 .upload-option,.import-button { display: inline-flex; position: relative; align-items: center; cursor: pointer; }
 .editor-sticky { position: sticky; z-index: 5; bottom: 12px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 12px; margin-top: 16px; border: 1px solid var(--border); border-radius: 12px; background: color-mix(in srgb,var(--card) 94%,transparent); box-shadow: 0 8px 30px #0002; backdrop-filter: blur(12px); }
+.save-error { flex: 1 0 100%; color: #bc5b41; font-size: 11px; line-height: 1.7; text-align: right; }
 .dirty-indicator { color: var(--muted); font-size: 11px; margin-right: auto; }
 .dirty-indicator.is-dirty { color: #bc7048; }
 .app-toast { position: fixed; z-index: 15; bottom: 25px; left: 50%; transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); color: var(--text); box-shadow: 0 8px 30px #0002; font-size: 12px; }

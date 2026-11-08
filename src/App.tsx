@@ -148,6 +148,7 @@ export default function App() {
   const [editMode, setEditMode] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
+  const [saveError, setSaveError] = useState("");
   const [importCandidate, setImportCandidate] = useState<unknown>(null);
   const [discardAction, setDiscardAction] = useState<"cancel" | "logout" | null>(null);
   const dirty = Boolean(adminContent && savedContent && JSON.stringify(adminContent) !== JSON.stringify(savedContent));
@@ -280,11 +281,12 @@ export default function App() {
   const saveEdits = async () => {
     if (!adminContent) return;
     setBusy(true);
+    setSaveError("");
     try {
       const ordered = { ...adminContent, images: adminContent.images.map((image, position) => ({ ...image, position })) };
       await api("/api/admin/content", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(ordered) });
       setAdminContent(ordered); setSavedContent(ordered); setViewProfile(publicToView(ordered)); setNotice(uiText("saved"));
-    } catch (error) { setNotice(error instanceof Error ? error.message : uiText("saveError")); }
+    } catch (error) { setSaveError(error instanceof Error ? error.message : uiText("saveError")); }
     finally { setBusy(false); }
   };
   const resizeAndUpload = async (file: File, caption = { vi: "", en: "" }) => {
@@ -367,7 +369,7 @@ export default function App() {
       <div className="content-toolbar"><span className="section-kicker"><span />{active === 0 ? t(language, "welcome") : t(language, "more")}</span>{!editMode && <button className={`empty-toggle${hideEmpty ? " enabled" : ""}`} aria-pressed={hideEmpty} onClick={() => setHideEmpty(!hideEmpty)}><Icon name={hideEmpty ? "eye-off" : "eye"} size={14} /><span>{hideEmpty ? t(language, "showEmpty") : t(language, "hideEmpty")}</span><span className="switch-track"><span /></span></button>}</div>
       <section className="content-panel" role="tabpanel" id={`panel-${active}`} aria-labelledby={`tab-${active}`} tabIndex={0}><div key={active} className="panel-content"><div className="panel-heading"><div><h2>{active === 0 ? t(language, "who") : text(tabs[active].label, language)}</h2><p>{text(viewProfile.tabDescriptions[tabs[active].id], language)}</p></div><span className="section-number" aria-hidden="true">0{active + 1}<span>{t(language, "sectionCount")}</span></span></div><TabContent active={tabs[active].id} />{editMode && adminContent && <ProfileEditor activeTab={tabs[active].id} language={language} data={adminContent} setData={setAdminContent as React.Dispatch<React.SetStateAction<AdminContent>>} onUpload={resizeAndUpload} />}</div><div className="panel-footnote"><Icon name="spark" size={14} /><span>{active === 8 ? t(language, "contactFootnote") : t(language, "defaultFootnote")}</span><span className="footnote-line" /></div></section>
     </main><footer className="site-footer"><span>© 2026 {text(viewProfile.nickname, language)}<span className="footer-separator">/</span>{t(language, "footer")}</span><span className="footer-signoff">{t(language, "thanks")}<Icon name="arrow" size={15} /></span></footer>
-    {editMode && adminContent && <div className="editor-sticky" role="region" aria-label={uiText("edit")}><span className={dirty ? "dirty-indicator is-dirty" : "dirty-indicator"}>{dirty ? uiText("dirty") : uiText("saveHint")}</span><button className="secondary-button" onClick={() => void exportBackup()} disabled={busy}>{uiText("export")}</button><label className="secondary-button import-button">{uiText("import")}<input type="file" accept="application/json,.json" onChange={importFile} /></label><button className="secondary-button" onClick={() => void cancelEdits()} disabled={busy}>{uiText("cancel")}</button><button className="primary-button" onClick={() => void saveEdits()} disabled={busy || !dirty}>{busy ? uiText("saving") : uiText("save")}</button></div>}
+    {editMode && adminContent && <div className="editor-sticky" role="region" aria-label={uiText("edit")}><span className={dirty ? "dirty-indicator is-dirty" : "dirty-indicator"}>{dirty ? uiText("dirty") : uiText("saveHint")}</span><button className="secondary-button" onClick={() => void exportBackup()} disabled={busy}>{uiText("export")}</button><label className="secondary-button import-button">{uiText("import")}<input type="file" accept="application/json,.json" onChange={importFile} /></label><button className="secondary-button" onClick={() => void cancelEdits()} disabled={busy}>{uiText("cancel")}</button><button className="primary-button" onClick={() => void saveEdits()} disabled={busy || !dirty}>{busy ? uiText("saving") : uiText("save")}</button>{saveError && <span className="save-error" role="alert">{saveError}</span>}</div>}
     {loginOpen && !authenticated && <dialog ref={loginDialog} className="modal login-modal" aria-labelledby="login-title" onCancel={(event) => { event.preventDefault(); setLoginOpen(false); }} onClose={() => setLoginOpen(false)} onClick={(event) => { if (event.target === event.currentTarget) setLoginOpen(false); }}>
       <div className="modal-heading"><div><h2 id="login-title">{uiText("loginTitle")}</h2><p className="modal-description">{uiText("loginDescription")}</p></div><button type="button" className="icon-button" aria-label={uiText("cancel")} onClick={() => setLoginOpen(false)}><Icon name="close" /></button></div>
       <form className="login-form" onSubmit={(event) => void submitLogin(event)}>

@@ -97,7 +97,7 @@ describe("owner login configuration and responses", () => {
   });
 
   it("returns a distinct 429 message when the login limit is reached", async () => {
-    const env = envForLogin(5, { ADMIN_PASSWORD_HASH: "configured-hash" });
+    const env = envForLogin(5, { ADMIN_PASSWORD_HASH: await hashPassword("rate-limit-test-password", new Uint8Array(16).fill(8), 100_000) });
     const response = await handleApi(loginRequest({ username: "owner", password: "wrong" }), env);
     const body = await response.json() as { error: string };
     expect(response.status).toBe(429);
