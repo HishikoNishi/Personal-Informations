@@ -35,12 +35,12 @@ export const tabs: { id: TabId; label: LocalizedText; icon: IconName }[] = [
 ];
 
 export const profile = {
-  nickname: { vi: "HishikoNishi" },
-  fullName: { vi: "Trang Hùng Gia Bảo" },
+  nickname: { vi: "HishikoNishi", en: "HishikoNishi" },
+  fullName: { vi: "Trang Hùng Gia Bảo", en: "Trang Hùng Gia Bảo" },
   monogram: "HN",
-  location: { vi: "Khu vực Đà Nẵng, Việt Nam" },
+  location: { vi: "Khu vực Đà Nẵng, Việt Nam", en: "Da Nang area, Vietnam" },
   photo: "",
-  intro: { vi: "" },
+  intro: { vi: "", en: "" },
   tabDescriptions: {
     "tong-quan": { vi: "Một vài điều cơ bản, để chúng mình bắt đầu làm quen.", en: "A few basics to help us get to know each other." },
     "ky-nang": { vi: "Những thứ mình biết làm, và vẫn đang học thêm mỗi ngày.", en: "Things I can do and am still learning every day." },
@@ -53,24 +53,24 @@ export const profile = {
     "lien-he": { vi: "Nếu có điều muốn kể, cứ nhắn cho mình nhé.", en: "If you have something to share, feel free to message me." },
   } satisfies Record<TabId, LocalizedText>,
   overview: [
-    { label: { vi: "Biệt danh", en: "Nickname" }, value: { vi: "HishikoNíhi" } },
-    { label: { vi: "Họ và tên", en: "Full name" }, value: { vi: "Trang Hùng Gia Bảo" } },
+    { label: { vi: "Biệt danh", en: "Nickname" }, value: { vi: "HishikoNíhi", en: "HishikoNíhi" } },
+    { label: { vi: "Họ và tên", en: "Full name" }, value: { vi: "Trang Hùng Gia Bảo", en: "Trang Hùng Gia Bảo" } },
     { label: { vi: "Tuổi", en: "Age" } },
-    { label: { vi: "Nơi ở", en: "Location" }, value: { vi: "Khu vực Đà Nẵng, Việt Nam" } },
-    { label: { vi: "Học vấn", en: "Education" }, value: { vi: "Tốt nghiệp cao đẳng ngành phát triển phần mềm" } },
-    { label: { vi: "Ngôn ngữ", en: "Languages" }, value: { vi: "Tiếng Việt và tiếng Anh, đang ôn IELTS." } },
+    { label: { vi: "Nơi ở", en: "Location" }, value: { vi: "Khu vực Đà Nẵng, Việt Nam", en: "Da Nang area, Vietnam" } },
+    { label: { vi: "Học vấn", en: "Education" }, value: { vi: "Tốt nghiệp cao đẳng ngành phát triển phần mềm", en: "Graduated from college with a degree in software development." } },
+    { label: { vi: "Ngôn ngữ", en: "Languages" }, value: { vi: "Tiếng Việt và tiếng Anh, đang ôn IELTS.", en: "Vietnamese and English; currently preparing for IELTS." } },
   ] satisfies ProfileCell[],
   skills: [
-    { label: { vi: "Frontend" }, items: [{ vi: "Vue.js" }, { vi: "React" }] },
-    { label: { vi: "Backend" }, items: [{ vi: "C#" }, { vi: "Node.js" }] },
+    { label: { vi: "Frontend", en: "Frontend" }, items: [{ vi: "Vue.js", en: "Vue.js" }, { vi: "React", en: "React" }] },
+    { label: { vi: "Backend", en: "Backend" }, items: [{ vi: "C#", en: "C#" }, { vi: "Node.js", en: "Node.js" }] },
     { label: { vi: "Dữ liệu và triển khai", en: "Data and deployment" }, items: [{ vi: "SQL" }, { vi: "Docker" }] },
-    { label: { vi: "Công cụ code", en: "Coding tools" }, items: [{ vi: "Visual Studio" }, { vi: "VS Code" }] },
-    { label: { vi: "Sáng tạo", en: "Creative" }, items: [{ vi: "Sản xuất nhạc (FL Studio)" }, { vi: "Thiết kế đồ họa" }, { vi: "Dựng video" }] },
+    { label: { vi: "Công cụ code", en: "Coding tools" }, items: [{ vi: "Visual Studio", en: "Visual Studio" }, { vi: "VS Code", en: "VS Code" }] },
+    { label: { vi: "Sáng tạo", en: "Creative" }, items: [{ vi: "Sản xuất nhạc (FL Studio)", en: "Music production (FL Studio)" }, { vi: "Thiết kế đồ họa", en: "Graphic design" }, { vi: "Dựng video", en: "Video editing" }] },
   ],
   projects: [
-    { name: { vi: "Great Sage" }, description: { vi: "Trợ lý AI bằng giọng nói trên máy tính." }, style: "sage", icon: "spark", category: { vi: "MỘT NGƯỜI BẠN ẢO", en: "A VIRTUAL COMPANION" }, tags: [{ vi: "AI" }, { vi: "Giọng nói", en: "Voice" }], repoUrl: "" },
-    { name: { vi: "Music-app" }, description: { vi: "Trình phát nhạc chạy nền, điều khiển qua khay hệ thống." }, style: "music", icon: "music", category: { vi: "CHO NHỮNG LÚC NGHE NHẠC", en: "FOR LISTENING TO MUSIC" }, tags: [{ vi: "Âm nhạc", en: "Music" }, { vi: "Máy tính", en: "Desktop" }], repoUrl: "" },
-    { name: { vi: "clinic-management-system" }, description: { vi: "Hệ thống quản lý phòng khám, C# và Vue.js." }, style: "clinic", icon: "heart", category: { vi: "MỘT BÀI TOÁN THỰC TẾ", en: "A PRACTICAL CHALLENGE" }, tags: [{ vi: "C#" }, { vi: "Vue.js" }], repoUrl: "" },
+    { name: { vi: "Great Sage", en: "Great Sage" }, description: { vi: "Trợ lý AI bằng giọng nói trên máy tính.", en: "A voice-controlled AI assistant for desktop." }, style: "sage", icon: "spark", category: { vi: "MỘT NGƯỜI BẠN ẢO", en: "A VIRTUAL COMPANION" }, tags: [{ vi: "AI", en: "AI" }, { vi: "Giọng nói", en: "Voice" }], repoUrl: "" },
+    { name: { vi: "Music-app", en: "Music-app" }, description: { vi: "Trình phát nhạc chạy nền, điều khiển qua khay hệ thống.", en: "A background music player controlled from the system tray." }, style: "music", icon: "music", category: { vi: "CHO NHỮNG LÚC NGHE NHẠC", en: "FOR LISTENING TO MUSIC" }, tags: [{ vi: "Âm nhạc", en: "Music" }, { vi: "Máy tính", en: "Desktop" }], repoUrl: "" },
+    { name: { vi: "clinic-management-system", en: "clinic-management-system" }, description: { vi: "Hệ thống quản lý phòng khám, C# và Vue.js.", en: "A clinic management system built with C# and Vue.js." }, style: "clinic", icon: "heart", category: { vi: "MỘT BÀI TOÁN THỰC TẾ", en: "A PRACTICAL CHALLENGE" }, tags: [{ vi: "C#", en: "C#" }, { vi: "Vue.js", en: "Vue.js" }], repoUrl: "" },
   ] satisfies Project[],
   hobbies: [
     { label: { vi: "Âm nhạc", en: "Music" }, hint: { vi: "Thể loại nghe và làm", en: "Genres I listen to and make" }, value: undefined },
@@ -84,7 +84,7 @@ export const profile = {
   lifestyle: [
     { label: { vi: "Một ngày của mình", en: "A day in my life" } },
     { label: { vi: "Thói quen", en: "Habits" } },
-    { label: { vi: "Đang theo đuổi", en: "What I'm working toward" }, value: { vi: "Có việc làm đầu tiên ở vị trí junior frontend, nhận thêm dự án freelance và hoàn thiện trang portfolio." } },
+    { label: { vi: "Đang theo đuổi", en: "What I'm working toward" }, value: { vi: "Có việc làm đầu tiên ở vị trí junior frontend, nhận thêm dự án freelance và hoàn thiện trang portfolio.", en: "Land my first junior frontend role, take on more freelance projects, and finish my portfolio website." } },
   ] satisfies ProfileCell[],
   style: [
     { vi: "Ăn mặc", en: "Clothing" }, { vi: "Thẩm mỹ", en: "Aesthetics" },

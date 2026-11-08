@@ -1,4 +1,5 @@
 import type { LocalizedText } from "./data/profile";
+import { profile } from "./data/profile";
 
 export type Language = "vi" | "en";
 export const ui = {
@@ -33,11 +34,34 @@ export const ui = {
 } as const;
 
 export type UiKey = keyof typeof ui.vi;
+
+// Saved D1 content may predate the English fields in the editor. Reuse the
+// bundled profile's translations for exact Vietnamese matches so EN works for
+// existing entries without sending private profile text to a translation API.
+const builtInTranslations = new Map<string, string>();
+function collectTranslations(value: unknown): void {
+  if (Array.isArray(value)) {
+    value.forEach(collectTranslations);
+    return;
+  }
+  if (!value || typeof value !== "object") return;
+
+  const record = value as Record<string, unknown>;
+  if (typeof record.vi === "string" && record.vi && typeof record.en === "string" && record.en) {
+    builtInTranslations.set(record.vi, record.en);
+  }
+  Object.values(record).forEach(collectTranslations);
+}
+collectTranslations(profile);
+
 export function t(language: Language, key: UiKey): string {
   return ui[language][key];
 }
 export function content(value: LocalizedText | undefined, language: Language): string {
-  return value?.[language] || value?.vi || "";
+  if (language === "vi") return value?.vi || "";
+  if (value?.en) return value.en;
+  if (value?.vi) return builtInTranslations.get(value.vi) || value.vi;
+  return "";
 }
 export function named(template: string, name: string): string {
   return template.replace("{name}", name);
