@@ -7,7 +7,8 @@ const parse = <T,>(value: string): T => JSON.parse(value) as T;
 
 function projectColumns(project: ProjectDocument) {
   const value = (key: string) => project.fields[key];
-  return [project.id, project.position, project.visibility, json(value("name")), json(value("category")), json(value("description")), json(value("tags")), json(value("repoUrl")), json(value("liveUrl")), json(value("style")), json(value("icon"))] as const;
+  const projectType = value("type") ?? { value: { vi: "Lập trình", en: "Coding" }, visibility: "public" };
+  return [project.id, project.position, project.visibility, json(value("name")), json(projectType), json(value("category")), json(value("description")), json(value("tags")), json(value("repoUrl")), json(value("liveUrl")), json(value("style")), json(value("icon"))] as const;
 }
 
 export async function seedIfEmpty(db: D1Database): Promise<void> {
@@ -20,7 +21,7 @@ export async function seedIfEmpty(db: D1Database): Promise<void> {
 
   const statements = SECTION_KEYS.map((section) => db.prepare("INSERT INTO site_sections (section, document) VALUES (?, ?)").bind(section, json(defaultSections[section])));
   for (const project of defaultProjects) {
-    statements.push(db.prepare("INSERT INTO projects (id, position, visibility, name, category, description, tags, repo_url, live_url, style, icon) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").bind(...projectColumns(project)));
+    statements.push(db.prepare("INSERT INTO projects (id, position, visibility, name, project_type, category, description, tags, repo_url, live_url, style, icon) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").bind(...projectColumns(project)));
   }
   await db.batch(statements);
 }
@@ -37,7 +38,8 @@ function projectFromRow(row: Record<string, unknown>): ProjectDocument {
   return {
     id: String(row.id), position: Number(row.position), visibility: row.visibility === "private" ? "private" : "public",
     fields: {
-      name: parse(row.name as string), category: parse(row.category as string), description: parse(row.description as string),
+      name: parse(row.name as string), type: row.project_type ? parse(row.project_type as string) : { value: { vi: "Lập trình", en: "Coding" }, visibility: "public" },
+      category: parse(row.category as string), description: parse(row.description as string),
       tags: parse(row.tags as string), repoUrl: parse(row.repo_url as string), liveUrl: parse(row.live_url as string),
       style: parse(row.style as string), icon: parse(row.icon as string),
     },
@@ -45,7 +47,7 @@ function projectFromRow(row: Record<string, unknown>): ProjectDocument {
 }
 
 export async function readProjects(db: D1Database): Promise<ProjectDocument[]> {
-  const rows = await db.prepare("SELECT id, position, visibility, name, category, description, tags, repo_url, live_url, style, icon FROM projects ORDER BY position, id").all<Record<string, unknown>>();
+  const rows = await db.prepare("SELECT id, position, visibility, name, project_type, category, description, tags, repo_url, live_url, style, icon FROM projects ORDER BY position, id").all<Record<string, unknown>>();
   return (rows.results ?? []).map(projectFromRow);
 }
 

@@ -79,6 +79,8 @@ export function validateProject(value: unknown, requireId = false): value is Pro
   if (!validateFieldMap(value.fields, 12)) return false;
   const document = value as unknown as ProjectDocument;
   for (const key of ["name", "category", "description"]) if (!localized(fieldValue(document, key))) return false;
+  const projectType = fieldValue(document, "type");
+  if (projectType !== undefined && !localized(projectType)) return false;
   for (const key of ["repoUrl", "liveUrl"]) if (!validHttpUrl(fieldValue(document, key))) return false;
   if (!PROJECT_STYLES.includes(fieldValue(document, "style") as (typeof PROJECT_STYLES)[number])) return false;
   if (!ICONS.includes(fieldValue(document, "icon") as (typeof ICONS)[number])) return false;

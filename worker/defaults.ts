@@ -75,6 +75,7 @@ export const defaultProjects: ProjectDocument[] = profile.projects.map((project,
   visibility: "public",
   fields: {
     name: projectField(project.name),
+    type: projectField(project.type),
     category: projectField(project.category),
     description: projectField(project.description),
     tags: projectField(project.tags.map((tag, tagIndex) => ({ id: `seed-project-${index + 1}-tag-${tagIndex + 1}`, visibility: "public", value: tag }))),

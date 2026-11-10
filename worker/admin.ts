@@ -25,7 +25,7 @@ function uniqueIds(values: readonly { id: string }[]): boolean {
 function projectStatements(projects: ProjectDocument[]) {
   return projects.map((project, position) => {
     const normalized = { ...project, position };
-    return { statement: "INSERT INTO projects (id, position, visibility, name, category, description, tags, repo_url, live_url, style, icon) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", bindings: encodeProject(normalized) };
+    return { statement: "INSERT INTO projects (id, position, visibility, name, project_type, category, description, tags, repo_url, live_url, style, icon) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", bindings: encodeProject(normalized) };
   });
 }
 

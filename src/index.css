@@ -2014,3 +2014,11 @@ html.dark {
     scrollbar-width: thin;
   }
 }
+
+.project-browser { display: grid; gap: 15px; }
+.project-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+.project-filter { padding: 7px 11px; border: 1px solid var(--border); border-radius: 999px; background: var(--card); color: var(--muted); font-size: 10px; transition: background .16s, border-color .16s, color .16s; }
+.project-filter:hover, .project-filter.selected { border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); background: var(--accent-soft); color: var(--accent); }
+.project-type-label { display: inline-flex; align-items: center; gap: 5px; width: fit-content; margin-bottom: 10px; padding: 4px 8px; border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--border)); border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 9px; line-height: 1.4; }
+.project-type-label svg { flex: 0 0 auto; }
+.project-type-help { grid-column: 1 / -1; color: var(--muted); font-size: 10px; line-height: 1.7; }

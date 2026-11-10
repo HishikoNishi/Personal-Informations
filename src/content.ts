@@ -85,7 +85,7 @@ export function publicToView(value: unknown): ViewProfile {
     const rawTags = unwrap(row.tags);
     return {
       id: asString(project.id) || `public-${index}`,
-      name: asText(unwrap(row.name)), category: asText(unwrap(row.category)), description: asText(unwrap(row.description)),
+      name: asText(unwrap(row.name)), type: asText(unwrap(row.type)), category: asText(unwrap(row.category)), description: asText(unwrap(row.description)),
       tags: Array.isArray(rawTags) ? rawTags.filter(isObject).map((tag) => asText(unwrap(tag.value))) : [],
       repoUrl: asString(unwrap(row.repoUrl)), liveUrl: asString(unwrap(row.liveUrl)),
       style: ["sage", "music", "clinic", "neutral"].includes(style) ? style as ViewProject["style"] : "neutral",

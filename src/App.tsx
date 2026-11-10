@@ -118,12 +118,32 @@ function CellGrid({ cells, numbered = true, health = false }: { cells: readonly 
 function ProjectCard({ project, index }: { project: ViewProfile["projects"][number]; index: number }) {
   const language = useContext(LanguageContext);
   return <article className="project-card"><div className={`project-strip project-strip-${project.style}`}><div className={`project-art project-art-${project.style}`} aria-hidden="true">{project.style === "sage" ? <><span className="orbit orbit-one" /><span className="orbit orbit-two" /><span className="orbit-core" /></> : project.style === "music" ? <div className="sound-wave">{[18, 35, 25, 48, 36, 58, 29, 45, 20, 33, 15].map((height, i) => <i key={i} style={{ height }} />)}</div> : <><span className="clinic-cross">+</span><span className="clinic-line" /><span className="clinic-line second" /></>}</div><span className="project-symbol"><Icon name={project.icon} size={25} /></span><span className="project-index">0{index + 1}</span></div>
-    <div className="project-body"><span className="eyebrow project-category">{text(project.category, language)}</span><h3>{text(project.name, language)}</h3><p>{text(project.description, language) || <PlaceholderTag />}</p>
+    <div className="project-body"><span className="project-type-label"><Icon name={project.type.vi.toLowerCase().includes("nhạc") || project.type.en?.toLowerCase() === "music" ? "music" : "code"} size={12} />{text(project.type, language)}</span><span className="eyebrow project-category">{text(project.category, language)}</span><h3>{text(project.name, language)}</h3><p>{text(project.description, language) || <PlaceholderTag />}</p>
       <div className="chips">{project.tags.map((tag) => <Chip key={text(tag, language)}>{text(tag, language)}</Chip>)}</div>
       {project.repoUrl && <a className="project-link" href={project.repoUrl} target="_blank" rel="noreferrer"><Icon name="github" size={15} />{t(language, "viewGithub")}<Icon name="external" size={12} /></a>}
       {project.liveUrl && <a className="project-link" href={project.liveUrl} target="_blank" rel="noreferrer"><Icon name="external" size={15} />{t(language, "viewLive")}<Icon name="external" size={12} /></a>}
     </div>
   </article>;
+}
+
+function ProjectBrowser() {
+  const language = useContext(LanguageContext);
+  const viewProfile = useContext(ProfileContext);
+  const [selectedType, setSelectedType] = useState("");
+  const typeMap = new Map<string, LocalizedText>();
+  for (const project of viewProfile.projects) {
+    const key = project.type.vi.trim();
+    if (key) typeMap.set(key, project.type);
+  }
+  const types = [...typeMap.values()];
+  const projects = viewProfile.projects.filter((project) => !selectedType || project.type.vi.trim() === selectedType);
+  return <div className="project-browser">
+    <div className="project-filters" role="group" aria-label={t(language, "projectTypeFilters")}>
+      <button className={`project-filter${selectedType === "" ? " selected" : ""}`} aria-pressed={selectedType === ""} onClick={() => setSelectedType("")}>{t(language, "allProjects")}</button>
+      {types.map((type) => <button key={type.vi} className={`project-filter${selectedType === type.vi.trim() ? " selected" : ""}`} aria-pressed={selectedType === type.vi.trim()} onClick={() => setSelectedType(type.vi.trim())}>{text(type, language)}</button>)}
+    </div>
+    <div className="project-grid">{projects.map((project) => <ProjectCard key={project.id} project={project} index={viewProfile.projects.indexOf(project)} />)}</div>
+  </div>;
 }
 
 function TabContent({ active, onNavigate }: { active: TabId; onNavigate: (index: number) => void }) {
@@ -132,7 +152,7 @@ function TabContent({ active, onNavigate }: { active: TabId; onNavigate: (index:
   const hideEmpty = useContext(HideEmptyContext);
   if (active === "tong-quan") return <><CellGrid cells={viewProfile.overview} /><OverviewDetails onNavigate={onNavigate} /></>;
   if (active === "ky-nang") return <div className="info-grid skills-grid">{viewProfile.skills.map((group, i) => <InfoCell key={text(group.label, language)} label={text(group.label, language)} number={`0${i + 1}`} wide={i === viewProfile.skills.length - 1}><div className="chips">{group.items.map((item) => <Chip key={text(item, language)} variant={i === 0 ? "accent" : "default"}>{text(item, language)}</Chip>)}</div></InfoCell>)}</div>;
-  if (active === "du-an") return <div className="project-grid">{viewProfile.projects.map((project, i) => <ProjectCard key={project.id} project={project} index={i} />)}</div>;
+  if (active === "du-an") return <ProjectBrowser />;
   if (active === "so-thich") {
     const hobbies = hideEmpty ? viewProfile.hobbies.filter((cell) => text(cell.value, language)) : viewProfile.hobbies;
     if (!hobbies.length) return <EmptyState />;

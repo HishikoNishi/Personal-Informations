@@ -14,6 +14,7 @@ export type TabId =
 export type ProfileCell = { label: LocalizedText; value?: LocalizedText; hint?: LocalizedText };
 export type Project = {
   name: LocalizedText;
+  type: LocalizedText;
   description: LocalizedText;
   tags: LocalizedText[];
   category: LocalizedText;
@@ -68,9 +69,9 @@ export const profile = {
     { label: { vi: "Sáng tạo", en: "Creative" }, items: [{ vi: "Sản xuất nhạc (FL Studio)", en: "Music production (FL Studio)" }, { vi: "Thiết kế đồ họa", en: "Graphic design" }, { vi: "Dựng video", en: "Video editing" }] },
   ],
   projects: [
-    { name: { vi: "Great Sage", en: "Great Sage" }, description: { vi: "Trợ lý AI bằng giọng nói trên máy tính.", en: "A voice-controlled AI assistant for desktop." }, style: "sage", icon: "spark", category: { vi: "MỘT NGƯỜI BẠN ẢO", en: "A VIRTUAL COMPANION" }, tags: [{ vi: "AI", en: "AI" }, { vi: "Giọng nói", en: "Voice" }], repoUrl: "" },
-    { name: { vi: "Music-app", en: "Music-app" }, description: { vi: "Trình phát nhạc chạy nền, điều khiển qua khay hệ thống.", en: "A background music player controlled from the system tray." }, style: "music", icon: "music", category: { vi: "CHO NHỮNG LÚC NGHE NHẠC", en: "FOR LISTENING TO MUSIC" }, tags: [{ vi: "Âm nhạc", en: "Music" }, { vi: "Máy tính", en: "Desktop" }], repoUrl: "" },
-    { name: { vi: "clinic-management-system", en: "clinic-management-system" }, description: { vi: "Hệ thống quản lý phòng khám, C# và Vue.js.", en: "A clinic management system built with C# and Vue.js." }, style: "clinic", icon: "heart", category: { vi: "MỘT BÀI TOÁN THỰC TẾ", en: "A PRACTICAL CHALLENGE" }, tags: [{ vi: "C#", en: "C#" }, { vi: "Vue.js", en: "Vue.js" }], repoUrl: "" },
+    { name: { vi: "Great Sage", en: "Great Sage" }, type: { vi: "Lập trình", en: "Coding" }, description: { vi: "Trợ lý AI bằng giọng nói trên máy tính.", en: "A voice-controlled AI assistant for desktop." }, style: "sage", icon: "spark", category: { vi: "MỘT NGƯỜI BẠN ẢO", en: "A VIRTUAL COMPANION" }, tags: [{ vi: "AI", en: "AI" }, { vi: "Giọng nói", en: "Voice" }], repoUrl: "" },
+    { name: { vi: "Music-app", en: "Music-app" }, type: { vi: "Âm nhạc", en: "Music" }, description: { vi: "Trình phát nhạc chạy nền, điều khiển qua khay hệ thống.", en: "A background music player controlled from the system tray." }, style: "music", icon: "music", category: { vi: "CHO NHỮNG LÚC NGHE NHẠC", en: "FOR LISTENING TO MUSIC" }, tags: [{ vi: "Âm nhạc", en: "Music" }, { vi: "Máy tính", en: "Desktop" }], repoUrl: "" },
+    { name: { vi: "clinic-management-system", en: "clinic-management-system" }, type: { vi: "Lập trình", en: "Coding" }, description: { vi: "Hệ thống quản lý phòng khám, C# và Vue.js.", en: "A clinic management system built with C# and Vue.js." }, style: "clinic", icon: "heart", category: { vi: "MỘT BÀI TOÁN THỰC TẾ", en: "A PRACTICAL CHALLENGE" }, tags: [{ vi: "C#", en: "C#" }, { vi: "Vue.js", en: "Vue.js" }], repoUrl: "" },
   ] satisfies Project[],
   hobbies: [
     { label: { vi: "Âm nhạc", en: "Music" }, hint: { vi: "Thể loại nghe và làm", en: "Genres I listen to and make" }, value: undefined },
