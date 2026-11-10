@@ -2022,3 +2022,4 @@ html.dark {
 .project-type-label { display: inline-flex; align-items: center; gap: 5px; width: fit-content; margin-bottom: 10px; padding: 4px 8px; border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--border)); border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 9px; line-height: 1.4; }
 .project-type-label svg { flex: 0 0 auto; }
 .project-type-help { grid-column: 1 / -1; color: var(--muted); font-size: 10px; line-height: 1.7; }
+.hobby-value-chip { padding: 4px 10px; border-color: color-mix(in srgb, var(--accent) 28%, var(--border)); background: color-mix(in srgb, var(--accent-soft) 65%, var(--card)); color: var(--text); font-size: 12px; font-weight: 500; }
