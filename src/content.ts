@@ -9,6 +9,7 @@ export type AdminContent = {
 };
 
 export type ViewProject = Omit<Project, "style"> & { id: string; liveUrl: string; style: Project["style"] | "neutral" };
+export type ViewHobby = Omit<ProfileCell, "value"> & { value?: LocalizedText | LocalizedText[]; hint?: LocalizedText };
 export type ViewContact = { id: string; label: LocalizedText; icon: IconName; mark?: string; value: string; url: string };
 export type ViewImage = { id: string; caption: LocalizedText; url: string };
 export type ViewProfile = {
@@ -22,7 +23,7 @@ export type ViewProfile = {
   overview: ProfileCell[];
   skills: { label: LocalizedText; items: LocalizedText[] }[];
   projects: ViewProject[];
-  hobbies: (ProfileCell & { hint?: LocalizedText })[];
+  hobbies: ViewHobby[];
   personality: ProfileCell[];
   lifestyle: ProfileCell[];
   style: ProfileCell[];
@@ -56,6 +57,19 @@ function profileCells(section: unknown): ProfileCell[] {
     const value = asText(unwrap(row.value));
     const hint = asText(unwrap(row.hint));
     return { label, value, ...(Object.prototype.hasOwnProperty.call(row, "hint") ? { hint } : {}) };
+  });
+}
+
+function hobbyCells(section: unknown): ViewHobby[] {
+  return items(section).map((item) => {
+    const row = itemFields(item);
+    const rawValue = unwrap(row.value);
+    const value = Array.isArray(rawValue) ? rawValue.map(asText) : asText(rawValue);
+    return {
+      label: asText(unwrap(row.label)),
+      value,
+      hint: asText(unwrap(row.hint)),
+    };
   });
 }
 
@@ -107,7 +121,7 @@ export function publicToView(value: unknown): ViewProfile {
     nickname: asText(unwrap(hero.nickname)), fullName: asText(unwrap(hero.fullName)), monogram: asString(unwrap(hero.monogram)) || "HN",
     location: asText(unwrap(hero.location)), intro: asText(unwrap(hero.intro)), photo: asString(unwrap(hero.photo)), tabDescriptions: descriptions,
     overview: profileCells(sections.overview), skills, projects,
-    hobbies: profileCells(sections.hobbies).map((cell, index) => ({ ...cell, hint: asText(unwrap(itemFields(items(sections.hobbies)[index] ?? {}).hint)) })),
+    hobbies: hobbyCells(sections.hobbies),
     personality: profileCells(sections.personality), lifestyle: profileCells(sections.lifestyle), style: profileCells(sections.style),
     health: profileCells(sections.health), contacts, images,
   };
