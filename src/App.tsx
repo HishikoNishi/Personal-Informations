@@ -388,7 +388,7 @@ export default function App() {
           if (!blob || blob.size > 600 * 1024) throw new Error(uiText("saveError"));
           const form = new FormData(); form.set("file", new File([blob], "upload.webp", { type: "image/webp" })); form.set("caption", JSON.stringify({ value: caption, visibility: "public" }));
           const response = await api("/api/admin/images", { method: "POST", body: form }); const uploaded = await response.json() as AdminContent["images"][number];
-          setAdminContent((previous) => previous ? { ...previous, images: [...previous.images, active === 0 ? { ...uploaded, visibility: "public" as const } : uploaded], sections: active === 0 ? { ...previous.sections, hero: { ...previous.sections.hero, fields: { ...previous.sections.hero.fields, photo: { value: `/api/images/${uploaded.id}`, visibility: "public" } } } } : previous.sections } : previous);
+          setAdminContent((previous) => previous ? { ...previous, images: [...previous.images, { ...uploaded, visibility: "public" as const }], sections: active === 0 ? { ...previous.sections, hero: { ...previous.sections.hero, fields: { ...previous.sections.hero.fields, photo: { value: `/api/images/${uploaded.id}`, visibility: "public" } } } } : previous.sections } : previous);
           uploadedCount += 1;
         } catch (error) {
           errors.push(error instanceof Error ? error.message : uiText("saveError"));
