@@ -370,21 +370,34 @@ export default function App() {
     } catch (error) { setSaveError(error instanceof Error ? error.message : uiText("saveError")); }
     finally { setBusy(false); }
   };
-  const resizeAndUpload = async (file: File, caption = { vi: "", en: "" }) => {
+  const resizeAndUpload = async (files: File[], caption = { vi: "", en: "" }) => {
     setBusy(true);
+    let uploadedCount = 0;
+    const errors: string[] = [];
     try {
-      const image = await createImageBitmap(file);
-      const scale = Math.min(1, 1200 / Math.max(image.width, image.height));
-      const canvas = document.createElement("canvas"); canvas.width = Math.max(1, Math.round(image.width * scale)); canvas.height = Math.max(1, Math.round(image.height * scale));
-      const context = canvas.getContext("2d"); if (!context) throw new Error(uiText("saveError"));
-      context.drawImage(image, 0, 0, canvas.width, canvas.height); image.close();
-      let blob: Blob | null = null; let quality = 0.88;
-      while (quality >= 0.38) { blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", quality)); if (blob && blob.size <= 600 * 1024) break; quality -= 0.1; }
-      if (!blob || blob.size > 600 * 1024) throw new Error(uiText("saveError"));
-      const form = new FormData(); form.set("file", new File([blob], "upload.webp", { type: "image/webp" })); form.set("caption", JSON.stringify({ value: caption, visibility: "public" }));
-      const response = await api("/api/admin/images", { method: "POST", body: form }); const uploaded = await response.json() as AdminContent["images"][number];
-      setAdminContent((previous) => previous ? { ...previous, images: [...previous.images, active === 0 ? { ...uploaded, visibility: "public" as const } : uploaded], sections: active === 0 ? { ...previous.sections, hero: { ...previous.sections.hero, fields: { ...previous.sections.hero.fields, photo: { value: `/api/images/${uploaded.id}`, visibility: "public" } } } } : previous.sections } : previous);
-      setNotice(t(language, "uploadSuccess"));
+      for (const file of files) {
+        try {
+          const image = await createImageBitmap(file);
+          const scale = Math.min(1, 1200 / Math.max(image.width, image.height));
+          const canvas = document.createElement("canvas"); canvas.width = Math.max(1, Math.round(image.width * scale)); canvas.height = Math.max(1, Math.round(image.height * scale));
+          const context = canvas.getContext("2d");
+          if (!context) { image.close(); throw new Error(uiText("saveError")); }
+          context.drawImage(image, 0, 0, canvas.width, canvas.height); image.close();
+          let blob: Blob | null = null; let quality = 0.88;
+          while (quality >= 0.38) { blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", quality)); if (blob && blob.size <= 600 * 1024) break; quality -= 0.1; }
+          if (!blob || blob.size > 600 * 1024) throw new Error(uiText("saveError"));
+          const form = new FormData(); form.set("file", new File([blob], "upload.webp", { type: "image/webp" })); form.set("caption", JSON.stringify({ value: caption, visibility: "public" }));
+          const response = await api("/api/admin/images", { method: "POST", body: form }); const uploaded = await response.json() as AdminContent["images"][number];
+          setAdminContent((previous) => previous ? { ...previous, images: [...previous.images, active === 0 ? { ...uploaded, visibility: "public" as const } : uploaded], sections: active === 0 ? { ...previous.sections, hero: { ...previous.sections.hero, fields: { ...previous.sections.hero.fields, photo: { value: `/api/images/${uploaded.id}`, visibility: "public" } } } } : previous.sections } : previous);
+          uploadedCount += 1;
+        } catch (error) {
+          errors.push(error instanceof Error ? error.message : uiText("saveError"));
+        }
+      }
+      if (uploadedCount === files.length && uploadedCount === 1) setNotice(t(language, "uploadSuccess"));
+      else if (!errors.length) setNotice(language === "vi" ? `Đã tải lên ${uploadedCount} ảnh.` : `Uploaded ${uploadedCount} photos.`);
+      else if (uploadedCount) setNotice(language === "vi" ? `Đã tải lên ${uploadedCount}/${files.length} ảnh. Ảnh còn lại tải không thành công.` : `Uploaded ${uploadedCount} of ${files.length} photos. The remaining uploads failed.`);
+      else setNotice(errors[0] ?? uiText("saveError"));
     } catch (error) { setNotice(error instanceof Error ? error.message : uiText("saveError")); }
     finally { setBusy(false); }
   };

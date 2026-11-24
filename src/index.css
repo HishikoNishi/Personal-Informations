@@ -1558,6 +1558,9 @@ h3 {
 .editor-image-item .editor-item-toolbar { grid-column: 1/-1; }
 .editor-avatar-preview { display: block; width: 90px; height: 90px; object-fit: cover; border-radius: 14px; }
 .editor-image-item .editor-localized { grid-template-columns: 1fr; }
+.editor-image-dropzone { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; min-height: 76px; padding: 14px; border: 1px dashed var(--border); border-radius: 10px; color: var(--muted); background: color-mix(in srgb,var(--cell) 55%,transparent); font-size: 12px; text-align: center; transition: border-color .16s ease, background .16s ease, color .16s ease; }
+.editor-image-dropzone.is-dragging { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb,var(--accent) 9%,var(--card)); }
+.editor-image-dropzone[aria-busy="true"] { opacity: .7; }
 .upload-option input,.import-button input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
 .upload-option,.import-button { display: inline-flex; position: relative; align-items: center; cursor: pointer; }
 .editor-sticky { position: sticky; z-index: 5; bottom: 12px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 12px; margin-top: 16px; border: 1px solid var(--border); border-radius: 12px; background: color-mix(in srgb,var(--card) 94%,transparent); box-shadow: 0 8px 30px #0002; backdrop-filter: blur(12px); }
