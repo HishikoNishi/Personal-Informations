@@ -1562,6 +1562,7 @@ h3 {
 .editor-image-dropzone.is-dragging { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb,var(--accent) 9%,var(--card)); }
 .editor-image-dropzone[aria-busy="true"] { opacity: .7; }
 .editor-image-hint { color: var(--muted); font-size: 11px; line-height: 1.6; }
+.editor-image-error { color: #bc5b41; font-size: 11px; line-height: 1.6; }
 .upload-option input,.import-button input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
 .upload-option,.import-button { display: inline-flex; position: relative; align-items: center; cursor: pointer; }
 .editor-sticky { position: sticky; z-index: 5; bottom: 12px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 12px; margin-top: 16px; border: 1px solid var(--border); border-radius: 12px; background: color-mix(in srgb,var(--card) 94%,transparent); box-shadow: 0 8px 30px #0002; backdrop-filter: blur(12px); }
