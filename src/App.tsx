@@ -274,7 +274,7 @@ export default function App() {
   const loadAdmin = async () => {
     const response = await api("/api/admin/content");
     const snapshot = await response.json() as AdminContent;
-    setAdminContent(snapshot); setSavedContent(snapshot); setViewProfile(publicToView(snapshot));
+    setAdminContent(snapshot); setSavedContent(snapshot); setViewProfile(publicToView(snapshot, true));
   };
   useEffect(() => {
     void loadPublic();
@@ -283,7 +283,7 @@ export default function App() {
       if (status.authenticated) { setAuthenticated(true); try { await loadAdmin(); } catch { setAuthenticated(false); } }
     }).catch(() => undefined);
   }, []);
-  useEffect(() => { if (editMode && adminContent) setViewProfile(publicToView(adminContent)); }, [adminContent, editMode]);
+  useEffect(() => { if (editMode && adminContent) setViewProfile(publicToView(adminContent, true)); }, [adminContent, editMode]);
   useEffect(() => {
     if (!authenticated) {
       window.profileLogin = async (username, password) => {
@@ -370,7 +370,7 @@ export default function App() {
     } catch (error) { setSaveError(error instanceof Error ? error.message : uiText("saveError")); }
     finally { setBusy(false); }
   };
-  const resizeAndUpload = async (files: File[], caption = { vi: "", en: "" }) => {
+  const resizeAndUpload = async (files: File[], caption = { vi: "", en: "" }, replaceId?: string) => {
     setBusy(true);
     let uploadedCount = 0;
     const errors: string[] = [];
@@ -386,9 +386,9 @@ export default function App() {
           let blob: Blob | null = null; let quality = 0.88;
           while (quality >= 0.38) { blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", quality)); if (blob && blob.size <= 600 * 1024) break; quality -= 0.1; }
           if (!blob || blob.size > 600 * 1024) throw new Error(uiText("saveError"));
-          const form = new FormData(); form.set("file", new File([blob], "upload.webp", { type: "image/webp" })); form.set("caption", JSON.stringify({ value: caption, visibility: "public" }));
+          const form = new FormData(); form.set("file", new File([blob], "upload.webp", { type: "image/webp" })); form.set("caption", JSON.stringify({ value: caption, visibility: "public" })); if (replaceId) form.set("replaceId", replaceId);
           const response = await api("/api/admin/images", { method: "POST", body: form }); const uploaded = await response.json() as AdminContent["images"][number];
-          setAdminContent((previous) => previous ? { ...previous, images: [...previous.images, { ...uploaded, visibility: "public" as const }], sections: active === 0 ? { ...previous.sections, hero: { ...previous.sections.hero, fields: { ...previous.sections.hero.fields, photo: { value: `/api/images/${uploaded.id}`, visibility: "public" } } } } : previous.sections } : previous);
+          setAdminContent((previous) => previous ? { ...previous, images: previous.images.some((row) => row.id === uploaded.id) ? previous.images.map((row) => row.id === uploaded.id ? { ...uploaded, visibility: "public" as const } : row) : [...previous.images, { ...uploaded, visibility: "public" as const }], sections: active === 0 ? { ...previous.sections, hero: { ...previous.sections.hero, fields: { ...previous.sections.hero.fields, photo: { value: `/api/images/${uploaded.id}`, visibility: "public" } } } } : previous.sections } : previous);
           uploadedCount += 1;
         } catch (error) {
           errors.push(error instanceof Error ? error.message : uiText("saveError"));

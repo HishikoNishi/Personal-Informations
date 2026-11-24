@@ -95,8 +95,6 @@ async function importBackup(env: Env, request: Request): Promise<Response> {
 }
 
 async function createImage(env: Env, request: Request): Promise<Response> {
-  const total = await env.DB.prepare("SELECT COUNT(*) AS count FROM images").first<{ count: number }>();
-  if ((total?.count ?? 0) >= MAX_IMAGES) return json({ error: "Đã đạt giới hạn 24 ảnh." }, 400);
   const declared = Number(request.headers.get("Content-Length") ?? 0);
   if (declared > MAX_IMAGE_BYTES + 16_384) return json({ error: "Ảnh vượt quá 600 KB." }, 413);
   let form: FormData;
@@ -106,6 +104,16 @@ async function createImage(env: Env, request: Request): Promise<Response> {
   if (!(file instanceof File) || !["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size === 0 || file.size > MAX_IMAGE_BYTES) return json({ error: "Chỉ nhận JPEG, PNG hoặc WebP dưới 600 KB." }, 400);
   const bytes = new Uint8Array(await file.arrayBuffer());
   if (!imageMagicMatches(file.type, bytes)) return json({ error: "Định dạng ảnh không khớp với dữ liệu tệp." }, 400);
+  const replaceId = form.get("replaceId");
+  if (replaceId !== null) {
+    if (typeof replaceId !== "string" || !/^[A-Za-z0-9_-]{1,80}$/.test(replaceId)) return json({ error: "Ảnh cần thay không hợp lệ." }, 400);
+    const existing = await env.DB.prepare("SELECT id, caption, position, visibility, created_at FROM images WHERE id = ?").bind(replaceId).first<{ id: string; caption: string; position: number; visibility: string; created_at: string }>();
+    if (!existing) return json({ error: "Không tìm thấy ảnh cần thay." }, 404);
+    await env.DB.prepare("UPDATE images SET mime = ?, bytes = ? WHERE id = ?").bind(file.type, bytes, replaceId).run();
+    return json({ id: existing.id, mime: file.type, caption: JSON.parse(existing.caption), position: existing.position, visibility: existing.visibility, created_at: existing.created_at });
+  }
+  const total = await env.DB.prepare("SELECT COUNT(*) AS count FROM images").first<{ count: number }>();
+  if ((total?.count ?? 0) >= MAX_IMAGES) return json({ error: "Đã đạt giới hạn 24 ảnh." }, 400);
   let caption: unknown;
   try { caption = JSON.parse(String(form.get("caption") ?? "")); } catch { return json({ error: "Chú thích ảnh không hợp lệ." }, 400); }
   const metadata = { id: crypto.randomUUID(), mime: file.type, caption, position: Number(form.get("position") ?? total?.count ?? 0), visibility: "private" as const };
