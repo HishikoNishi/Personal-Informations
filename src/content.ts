@@ -115,11 +115,16 @@ export function publicToView(value: unknown): ViewProfile {
     const iconName = asString(unwrap(row.icon));
     return { id: asString(contact.id) || `contact-${index}`, label: asText(unwrap(row.label)), icon: iconName as IconName, mark: asString(unwrap(row.mark)) || undefined, value: asString(unwrap(row.value)), url: asString(unwrap(row.url)) };
   });
+  const imageMetadata = value.images.filter(isObject);
   const avatarId = asString(unwrap(hero.photo)).match(/^\/api\/images\/([^/?#]+)/)?.[1];
-  const images = value.images.filter(isObject).filter((image) => asString(image.id) !== avatarId).map((image) => ({ id: asString(image.id), caption: asText(unwrap(image.caption)), url: `/api/images/${encodeURIComponent(asString(image.id))}` }));
+  const privateImageIds = new Set(imageMetadata.filter((image) => image.visibility === "private").map((image) => asString(image.id)));
+  const photoValue = asString(unwrap(hero.photo));
+  const photoId = photoValue.match(/^\/api\/images\/([^/?#]+)/)?.[1];
+  const photo = photoId && privateImageIds.has(photoId) ? "" : photoValue;
+  const images = imageMetadata.filter((image) => image.visibility !== "private" && asString(image.id) !== avatarId).map((image) => ({ id: asString(image.id), caption: asText(unwrap(image.caption)), url: `/api/images/${encodeURIComponent(asString(image.id))}` }));
   return {
     nickname: asText(unwrap(hero.nickname)), fullName: asText(unwrap(hero.fullName)), monogram: asString(unwrap(hero.monogram)) || "HN",
-    location: asText(unwrap(hero.location)), intro: asText(unwrap(hero.intro)), photo: asString(unwrap(hero.photo)), tabDescriptions: descriptions,
+    location: asText(unwrap(hero.location)), intro: asText(unwrap(hero.intro)), photo, tabDescriptions: descriptions,
     overview: profileCells(sections.overview), skills, projects,
     hobbies: hobbyCells(sections.hobbies),
     personality: profileCells(sections.personality), lifestyle: profileCells(sections.lifestyle), style: profileCells(sections.style),
